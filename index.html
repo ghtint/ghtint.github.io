@@ -1,26 +1,26 @@
-<!-- ===================== 全局配置区（所有配置集中在此，请在此处修改） ===================== -->
+<!-- ==================== 全局配置（可按需修改，也可保持现状） ==================== -->
 <script>
 window.GLOBAL_CONFIG = {
-    // ---------- GitHub 基础配置 ----------
+    // ----- GitHub 接口配置 -----
     GITHUB_API_BASE: 'https://api.github.com',
-    // 下载文件代理加速地址
+    // 下载专用前缀
     DOWNLOAD_PROXY: 'https://cdn.gh-proxy.org/',
 
-    // ---------- 翻译 API 配置（Agnes-AI 兼容 OpenAI 格式） ----------
-    // API 接口地址（结尾无需斜杠，兼容 /v1/chat/completions 规范）
-    TRANSLATE_API_BASE: 'https://apihub.agnes-ai.com/v1',
+    // ----- 翻译 API 配置（Agenes-AI 兼容 OpenAI 接口）-----
+    // API 地址末尾不要带斜杠，若为 OpenAI 兼容接口，请改成 /v1/chat/completions 形式
+    TRANSLATE_API_BASE: 'https://apihug.agnes-ai.com/v1',
     // 使用的模型名称
     TRANSLATE_MODEL: 'agnes-2.0-flash',
-    // API 密钥【请在此处粘贴你的密钥，或在页面设置面板中填写】
+    // API 密钥（留空则每次需手动输入，仅在本地浏览器中保存）
     TRANSLATE_API_KEY: '',
 
 
-    // ---------- 功能开关 ----------
-    ENABLE_IMAGE_PROXY: true,  // 是否开启 raw 图片加速
-    DEFAULT_BRANCH: 'main',    // 默认分支名
+    // ----- 其他设置 -----
+    ENABLE_IMAGE_PROXY: true,  // 是否启用 raw 图片代理
+    DEFAULT_BRANCH: 'main',    // 默认分支
 };
 </script>
-<!-- =================================================================================== -->
+<!-- ============================================================================= -->
 
 <!DOCTYPE html>
 <html lang="zh-CN" data-theme="ayu-dark">
@@ -59,7 +59,7 @@ window.GLOBAL_CONFIG = {
             --primary: #ffb454; --accent: #39bae6; --border: #1f2937;
         }
         [data-theme="catppuccin-mocha"] {
-            --bg: #1e1e2e; --bg-secondary: #282838; --bg-tertiary: #313244;
+            --bg: #1e1e2e; --bg-secondary: #28283a; --bg-tertiary: #313244;
             --text: #cdd6f4; --text-secondary: #bac2de; --text-muted: #6c7086;
             --primary: #cba6f7; --accent: #89b4fa; --border: #45475a;
         }
@@ -70,7 +70,7 @@ window.GLOBAL_CONFIG = {
         }
         [data-theme="dracula"] {
             --bg: #282a36; --bg-secondary: #21222c; --bg-tertiary: #44475a;
-            --text: #f8f8f2; --text-secondary: #bd93f9; --text-muted: #6272a;
+            --text: #f8f8f2; --text-secondary: #bd93f9; --text-muted: #6272a4;
             --primary: #bd93f9; --accent: #ff79c6; --border: #44475a;
         }
         [data-theme="monokai"] {
@@ -108,7 +108,7 @@ window.GLOBAL_CONFIG = {
         .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-        /* ========== 三栏布局核心 ========== */
+        /* ========== 主布局结构 ========== */
         .app-container {
             display: flex;
             flex-direction: column;
@@ -218,7 +218,7 @@ window.GLOBAL_CONFIG = {
         .markdown-body th { background: var(--bg-2); }
         .markdown-body img { max-width: 100%; border-radius: 4px; }
 
-        /* 代码块复制按钮 */
+        /* 代码复制按钮 */
         .code-copy-btn {
             position: absolute;
             top: 8px; right: 8px; z-index: 10;
@@ -230,13 +230,13 @@ window.GLOBAL_CONFIG = {
             font-size: 12px;
             cursor: pointer;
             opacity: 0;
-            transition: opacity .2s, border-color .2s, color .2s;
+            transition: opacity 0.2s, border-color 0.2s, color 0.2s;
         }
         pre:hover .code-copy-btn { opacity: 1; }
         .code-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
         .code-copy-btn.copied { color: var(--accent); border-color: var(--accent); }
 
-        /* 操作按钮悬浮层 */
+        /* 右上角操作按钮组 */
         .action-bar {
             position: absolute;
             top: 12px; right: 12px; z-index: 99;
@@ -251,14 +251,14 @@ window.GLOBAL_CONFIG = {
             color: var(--primary);
             white-space: nowrap;
             cursor: pointer;
-            transition: border-color .2s;
+            transition: border-color 0.2s;
             text-decoration: none;
             display: inline-block;
         }
         .action-btn:hover { border-color: var(--primary); }
         .action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* 属性面板样式 */
+        /* 属性面板内容 */
         .prop-section { padding: 12px; border-bottom: 1px solid var(--border); }
         .prop-section-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; }
         .prop-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: var(--text-secondary); }
@@ -276,6 +276,53 @@ window.GLOBAL_CONFIG = {
         .release-item:hover { background: var(--bg-3); color: var(--primary); }
         .release-tag { font-weight: 500; }
         .release-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ===== 拖拽分隔条（新增） ===== */
+        .resizer {
+            flex-shrink: 0;
+            width: 5px;
+            cursor: col-resize;
+            background: transparent;
+            position: relative;
+            z-index: 5;
+            transition: background 0.15s ease;
+        }
+        .resizer::after {
+            content: '';
+            position: absolute;
+            inset: 0 1px;
+            border-radius: 2px;
+            background: transparent;
+            transition: background 0.15s ease;
+        }
+        .resizer:hover::after { background: var(--border); }
+        .resizer.dragging,
+        .resizer.dragging::after { background: var(--primary) !important; }
+        .panel-left.dragging,
+        .panel-right.dragging { transition: none !important; }
+
+        /* ===== 折叠后的展开按钮（新增） ===== */
+        .panel-expand-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 40px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            cursor: pointer;
+            z-index: 40;
+            font-size: 11px;
+            line-height: 1;
+            border-radius: 0 6px 6px 0;
+            transition: color 0.15s, background 0.15s;
+        }
+        .panel-expand-btn.right { border-radius: 6px 0 0 6px; }
+        .panel-expand-btn:hover { color: var(--primary); background: var(--bg-3); }
     </style>
 </head>
 <body>
@@ -284,11 +331,11 @@ window.GLOBAL_CONFIG = {
         <header class="h-14 border-b border-border bg-bg-2 flex items-center px-4 gap-4 flex-shrink-0">
             <div class="text-primary font-bold">GH Reader</div>
             <div class="flex-1 max-w-xl">
-                <input id="search-input" type="text" placeholder="粘贴Github链接 / owner/repo / 用户名，回车跳转" 
+                <input id="search-input" type="text" placeholder="搜索GitHub仓库 / owner/repo / 用户名，回车访问" 
                     class="w-full bg-bg-3 border border-border rounded-md px-3 py-1.5 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary">
             </div>
             <select id="theme-select" class="bg-bg-3 border border-border rounded-md px-2 py-1.5 text-sm text-text focus:outline-none focus:border-primary">
-                <optgroup label="暗色主题">
+                <optgroup label="深色主题">
                     <option value="ayu-dark">Ayu Dark</option>
                     <option value="catppuccin-mocha">Catppuccin Mocha</option>
                     <option value="github-dark">GitHub Dark</option>
@@ -297,7 +344,7 @@ window.GLOBAL_CONFIG = {
                     <option value="nord">Nord</option>
                     <option value="one-dark">One Dark</option>
                 </optgroup>
-                <optgroup label="亮色主题">
+                <optgroup label="浅色主题">
                     <option value="ayu-light">Ayu Light</option>
                     <option value="catppuccin-latte">Catppuccin Latte</option>
                     <option value="github-light">GitHub Light</option>
@@ -306,9 +353,9 @@ window.GLOBAL_CONFIG = {
             <button id="settings-btn" class="bg-bg-3 border border-border rounded-md px-3 py-1.5 text-sm hover:border-primary transition-colors">设置</button>
         </header>
 
-        <!-- 三栏主体 -->
+        <!-- 主内容区 -->
         <div class="main-layout">
-            <!-- 左栏：文件树 -->
+            <!-- 左侧：文件树 -->
             <aside id="panel-left" class="panel-left" style="width: 280px;">
                 <div class="panel-header">
                     <span>资源管理器</span>
@@ -319,7 +366,11 @@ window.GLOBAL_CONFIG = {
                 </div>
             </aside>
 
-            <!-- 中栏：内容区 -->
+            <!-- 拖拽分隔条：左（新增） -->
+            <div id="resizer-left" class="resizer"
+                 data-target="panel-left" data-side="left"></div>
+
+            <!-- 中间：内容区 -->
             <section id="panel-center" class="panel-center scrollbar-thin">
                 <div id="main-content" class="max-w-4xl mx-auto">
                     <div class="text-center mt-20">
@@ -330,7 +381,11 @@ window.GLOBAL_CONFIG = {
                 </div>
             </section>
 
-            <!-- 右栏：属性面板 -->
+            <!-- 拖拽分隔条：右（新增） -->
+            <div id="resizer-right" class="resizer"
+                 data-target="panel-right" data-side="right"></div>
+
+            <!-- 右侧：属性面板 -->
             <aside id="panel-right" class="panel-right" style="width: 300px;">
                 <div class="panel-header">
                     <span>属性</span>
@@ -343,20 +398,24 @@ window.GLOBAL_CONFIG = {
         </div>
     </div>
 
+    <!-- 折叠态展开按钮（新增） -->
+    <div id="expand-left"  class="panel-expand-btn"      data-side="left">▶</div>
+    <div id="expand-right" class="panel-expand-btn right" data-side="right">◀</div>
+
     <!-- 设置弹窗 -->
     <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
         <div class="bg-bg-2 border border-border rounded-lg w-full max-w-md p-5 mx-4">
             <h3 class="text-lg font-bold mb-4">设置</h3>
             
             <label class="block text-sm text-text-2 mb-2">GitHub Personal Access Token</label>
-            <input id="token-input" type="password" placeholder="ghp_xxxxxxxx" 
+            <input id="token-input" type="password" placeholder="ghp_xxxxxxxxxxxx" 
                 class="w-full bg-bg-3 border border-border rounded-md px-3 py-2 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary mb-2">
             <p class="text-text-3 text-xs mb-4">仅保存在本地浏览器，不会上传任何服务器</p>
 
             <div class="border-t border-border pt-4 mb-4">
                 <div class="text-sm font-medium text-text mb-2">翻译 API 设置</div>
                 <label class="block text-sm text-text-2 mb-2">API 密钥</label>
-                <input id="translate-api-key" type="password" placeholder="请输入 Agnes-AI API 密钥" 
+                <input id="translate-api-key" type="password" placeholder="输入 Agnes-AI API 密钥" 
                     class="w-full bg-bg-3 border border-border rounded-md px-3 py-2 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary mb-2">
                 <p class="text-text-3 text-xs">密钥仅保存在本地浏览器</p>
             </div>
@@ -374,7 +433,7 @@ window.GLOBAL_CONFIG = {
         const API_BASE = CONFIG.GITHUB_API_BASE;
         const DOWNLOAD_PROXY = CONFIG.DOWNLOAD_PROXY;
         const cache = new Map();
-        const dirCache = new Map(); // 目录内容缓存
+        const dirCache = new Map(); // 目录缓存
 
         let currentRepo = { owner: '', repo: '', branch: CONFIG.DEFAULT_BRANCH, path: '' };
         let globalRawMd = "";
@@ -391,7 +450,7 @@ window.GLOBAL_CONFIG = {
             'catppuccin-latte': 'atom-one-light', 'github-light': 'github',
         };
 
-        // ========== 工具函数 ==========
+        // ========== 本地存储 ==========
         const storage = {
             get: key => { try { return JSON.parse(localStorage.getItem('ghr_' + key)) } catch { return null } },
             set: (key, val) => localStorage.setItem('ghr_' + key, JSON.stringify(val))
@@ -423,7 +482,7 @@ window.GLOBAL_CONFIG = {
             });
         }
 
-        // ========== 图片加速 ==========
+        // ========== 图片代理 ==========
         function proxyImages(container, owner, repo, branch, currentPath) {
             if (!CONFIG.ENABLE_IMAGE_PROXY) return;
             const imgs = container.querySelectorAll('img');
@@ -468,7 +527,7 @@ window.GLOBAL_CONFIG = {
 
             const res = await fetch(API_BASE + path, { headers });
             if (res.status === 403 && res.headers.get('X-RateLimit-Remaining') === '0') {
-                throw new Error('API 请求已达上限，请在设置中填写 PAT');
+                throw new Error('API 请求频率超限，请在设置中添加 PAT');
             }
             if (!res.ok) throw new Error('请求失败：' + res.status + ' ' + res.statusText);
             
@@ -501,20 +560,21 @@ window.GLOBAL_CONFIG = {
         // ========== 翻译功能 ==========
         async function translateMarkdown(mdText) {
             const apiKey = storage.get('translate_api_key') || CONFIG.TRANSLATE_API_KEY;
-            if (!apiKey) throw new Error("未配置 API 密钥，请在设置面板中填写");
+            if (!apiKey) throw new Error('缺少翻译 API 密钥，请在设置中添加后重试');
 
             const apiBase = CONFIG.TRANSLATE_API_BASE.replace(/\/$/, '');
             const url = `${apiBase}/chat/completions`;
 
-            const prompt = `你是专业的技术文档翻译官。请将下面的英文 Markdown 技术文档翻译成简体中文。
-要求：
-1. 技术术语准确，保留通用英文缩写
-2. 代码块、命令行、变量名、函数名、文件名原样保留
-3. 严格保留 Markdown 格式、标题层级、列表、表格
-4. 只输出翻译后的 Markdown 内容，不要多余文字
+            const prompt = `请将以下 Markdown 文档翻译成中文。保持原有格式不变，不要添加任何注释或解释，直接输出翻译后的 Markdown 文档。
+注意：
+1. 代码块内容不要翻译
+2. URL、邮箱、命令行参数保持原样
+3. 专有名词首次出现可以括号标注英文
+4. 保持原有 Markdown 结构，包括标题、列表、表格、引用等
+5. 不要修改文档中的 Markdown 语法
 
-待翻译原文：
-${mdText}`;
+待翻译内容：
+ ${mdText}`;
 
             const res = await fetch(url, {
                 method: 'POST',
@@ -559,7 +619,7 @@ ${mdText}`;
 
                 if (globalTranslatedMd) {
                     mdBox.innerHTML = marked.parse(globalTranslatedMd);
-                    transBtn.innerText = "↩ 恢复原文";
+                    transBtn.innerText = "↩ 查看原文";
                     isTranslated = true;
                     mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
                     bindCodeCopyButtons(mdBox);
@@ -574,13 +634,13 @@ ${mdText}`;
                 try {
                     globalTranslatedMd = await translateMarkdown(globalRawMd);
                     mdBox.innerHTML = marked.parse(globalTranslatedMd);
-                    transBtn.innerText = "↩ 恢复原文";
+                    transBtn.innerText = "↩ 查看原文";
                     isTranslated = true;
                     mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
                     bindCodeCopyButtons(mdBox);
                     proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
                 } catch (e) {
-                    console.error("翻译失败：", e);
+                    console.error("翻译出错：", e);
                     alert(e.message);
                     transBtn.innerText = "🌐 翻译/原文";
                 } finally {
@@ -590,19 +650,107 @@ ${mdText}`;
             };
         }
 
-        // ========== 面板折叠 ==========
-        function togglePanel(side) {
-            const panel = document.getElementById('panel-' + side);
-            panel.classList.toggle('collapsed');
-            const btn = panel.querySelector('.panel-toggle-btn');
-            if (panel.classList.contains('collapsed')) {
-                btn.innerText = side === 'left' ? '▶' : '◀';
-            } else {
-                btn.innerText = side === 'left' ? '◀' : '▶';
-            }
+        // ========== 面板切换（已重写：含拖拽与展开按钮） ==========
+        const PANEL_MIN = 160;
+        const PANEL_MAX = 560;
+
+        function initResizer(resizer) {
+            const panel = document.getElementById(resizer.dataset.target);
+            const side  = resizer.dataset.side;
+            let startX = 0, startWidth = 0;
+
+            const onMove = (e) => {
+                const x = e.touches ? e.touches[0].clientX : e.clientX;
+                const dx = x - startX;
+                const w = Math.max(
+                    PANEL_MIN,
+                    Math.min(PANEL_MAX, side === 'left' ? startWidth + dx : startWidth - dx)
+                );
+                panel.style.width = w + 'px';
+                storage.set('panel_width_' + side, w);
+            };
+
+            const onUp = () => {
+                panel.classList.remove('dragging');
+                resizer.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onUp);
+            };
+
+            const onDown = (e) => {
+                if (panel.classList.contains('collapsed')) return;
+                startX = e.touches ? e.touches[0].clientX : e.clientX;
+                startWidth = panel.offsetWidth;
+                panel.classList.add('dragging');
+                resizer.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('touchend', onUp);
+                e.preventDefault();
+            };
+
+            resizer.addEventListener('mousedown',  onDown);
+            resizer.addEventListener('touchstart', onDown, { passive: false });
         }
 
-        // ========== 文件树（VS Code 风格展开/折叠） ==========
+        function showExpandButton(side, show) {
+            const btn = document.getElementById('expand-' + side);
+            if (!btn) return;
+            btn.style.display = show ? 'flex' : 'none';
+            btn.style[side] = '0';
+        }
+
+        function togglePanel(side) {
+            const panel   = document.getElementById('panel-' + side);
+            const resizer = document.getElementById('resizer-' + side);
+            const collapsed = panel.classList.toggle('collapsed');
+
+            if (resizer) resizer.style.display = collapsed ? 'none' : 'block';
+            showExpandButton(side, collapsed);
+
+            const btn = panel.querySelector('.panel-toggle-btn');
+            if (btn) btn.textContent = collapsed
+                ? (side === 'left' ? '▶' : '◀')
+                : (side === 'left' ? '◀' : '▶');
+
+            storage.set('panel_collapsed_' + side, collapsed);
+        }
+
+        function expandPanel(side) {
+            const panel = document.getElementById('panel-' + side);
+            if (panel.classList.contains('collapsed')) togglePanel(side);
+        }
+
+        function initSidebar() {
+            document.querySelectorAll('.resizer').forEach(initResizer);
+            document.querySelectorAll('.panel-expand-btn').forEach(btn =>
+                btn.addEventListener('click', () => expandPanel(btn.dataset.side))
+            );
+
+            ['left', 'right'].forEach(side => {
+                const panel = document.getElementById('panel-' + side);
+                const w = storage.get('panel_width_' + side);
+                if (w) panel.style.width = w + 'px';
+
+                if (storage.get('panel_collapsed_' + side)) {
+                    panel.classList.add('collapsed');
+                    const r = document.getElementById('resizer-' + side);
+                    if (r) r.style.display = 'none';
+                    showExpandButton(side, true);
+                    const btn = panel.querySelector('.panel-toggle-btn');
+                    if (btn) btn.textContent = side === 'left' ? '▶' : '◀';
+                }
+            });
+        }
+
+        // ========== 文件树（VS Code 风格三栏布局） ==========
         async function loadFileTree(owner, repo, path = '') {
             const cacheKey = `${owner}/${repo}/${path}`;
             if (dirCache.has(cacheKey)) return dirCache.get(cacheKey);
@@ -616,7 +764,7 @@ ${mdText}`;
                 dirCache.set(cacheKey, data);
                 return data;
             } catch (e) {
-                console.error('加载目录失败:', e);
+                console.error('加载目录失败：', e);
                 return [];
             }
         }
@@ -630,19 +778,19 @@ ${mdText}`;
 
                 if (isDir) {
                     html += `
-                        <div class="tree-item dir" data-path="${fullPath}" onclick="toggleDir(this, '${fullPath}')">
-                            <span class="tree-arrow">▶</span>
-                            <span class="tree-icon">📁</span>
-                            <span>${item.name}</span>
-                        </div>
-                        <div class="tree-children" data-path="${fullPath}"></div>`;
+                    <div class="tree-item dir" data-path="${fullPath}" onclick="toggleDir(this, '${fullPath}')">
+                        <span class="tree-arrow">▶</span>
+                        <span class="tree-icon">📁</span>
+                        <span>${item.name}</span>
+                    </div>
+                    <div class="tree-children" data-path="${fullPath}"></div>`;
                 } else {
                     html += `
-                        <div class="tree-item file ${isActive ? 'active' : ''}" data-path="${fullPath}" onclick="openFile('${fullPath}')">
-                            <span class="tree-arrow"></span>
-                            <span class="tree-icon">📄</span>
-                            <span>${item.name}</span>
-                        </div>`;
+                    <div class="tree-item file ${isActive ? 'active' : ''}" data-path="${fullPath}" onclick="openFile('${fullPath}')">
+                        <span class="tree-arrow"></span>
+                        <span class="tree-icon">📄</span>
+                        <span>${item.name}</span>
+                    </div>`;
                 }
             });
             return html;
@@ -714,23 +862,23 @@ ${mdText}`;
 
             document.getElementById('prop-panel').innerHTML = `
                 <div class="prop-section">
-                    <div class="prop-section-title">仓库概览</div>
+                    <div class="prop-section-title">仓库信息</div>
                     <div class="prop-row"><span class="label">Stars</span><span>${repoInfo.stargazers_count.toLocaleString()}</span></div>
                     <div class="prop-row"><span class="label">Forks</span><span>${repoInfo.forks_count.toLocaleString()}</span></div>
                     <div class="prop-row"><span class="label">Issues</span><span>${repoInfo.open_issues_count.toLocaleString()}</span></div>
-                    <div class="prop-row"><span class="label">许可证</span><span>${repoInfo.license?.spdx_id || '-'}</span></div>
-                    <div class="prop-row"><span class="label">更新时间</span><span>${new Date(repoInfo.updated_at).toLocaleDateString()}</span></div>
-                    <a href="${repoInfo.html_url}" target="_blank" class="block text-center mt-2 text-xs text-primary hover:underline">在 GitHub 中打开</a>
+                    <div class="prop-row"><span class="label">协议</span><span>${repoInfo.license?.spdx_id || '-'}</span></div>
+                    <div class="prop-row"><span class="label">最近更新</span><span>${new Date(repoInfo.updated_at).toLocaleDateString()}</span></div>
+                    <a href="${repoInfo.html_url}" target="_blank" class="block text-center mt-2 text-xs text-primary hover:underline">在 GitHub 中查看</a>
                 </div>
 
                 <div class="prop-section">
-                    <div class="prop-section-title">语言分布</div>
-                    ${langBars || '<div class="text-text-3 text-xs">暂无数据</div>'}
+                    <div class="prop-section-title">语言构成</div>
+                    ${langBars || '<div class="text-text-3 text-xs">无数据</div>'}
                 </div>
 
                 <div class="prop-section">
-                    <div class="prop-section-title">最新版本</div>
-                    ${releaseHtml || '<div class="text-text-3 text-xs">暂无版本</div>'}
+                    <div class="prop-section-title">最新发布</div>
+                    ${releaseHtml || '<div class="text-text-3 text-xs">暂无发布</div>'}
                 </div>
             `;
         }
@@ -739,7 +887,7 @@ ${mdText}`;
             window.location.hash = `/${currentRepo.owner}/${currentRepo.repo}/releases`;
         }
 
-        // ========== 内容渲染 ==========
+        // ========== 文档内容 ==========
         function renderFileContent(fileData) {
             const rawContent = decodeBase64(fileData.content);
             const proxyUrl = DOWNLOAD_PROXY + fileData.download_url;
@@ -770,7 +918,7 @@ ${mdText}`;
                         if (ok) {
                             const btn = document.getElementById('copy-file-btn');
                             const orig = btn.innerText;
-                            btn.innerText = '✅ 已复制';
+                            btn.innerText = '✓ 已复制';
                             setTimeout(() => btn.innerText = orig, 1500);
                         }
                     };
@@ -793,8 +941,9 @@ ${mdText}`;
                         const ok = await copyToClipboard(rawContent);
                         if (ok) {
                             const btn = document.getElementById('copy-file-btn');
-                            btn.innerText = '✅ 已复制';
-                            setTimeout(() => btn.innerText = '📋 复制', 1500);
+                            const orig = btn.innerText;
+                            btn.innerText = '✓ 已复制';
+                            setTimeout(() => btn.innerText = orig, 1500);
                         }
                     };
                 }, 0);
@@ -853,15 +1002,16 @@ ${mdText}`;
                         const ok = await copyToClipboard(rawContent);
                         if (ok) {
                             const btn = document.getElementById('copy-file-btn');
-                            btn.innerText = '✅ 已复制';
-                            setTimeout(() => btn.innerText = '📋 复制', 1500);
+                            const orig = btn.innerText;
+                            btn.innerText = '✓ 已复制';
+                            setTimeout(() => btn.innerText = orig, 1500);
                         }
                     };
                 }, 0);
             } else {
                 document.getElementById('main-content').innerHTML = `
                     <div class="text-center py-20 text-text-3">
-                        该仓库暂无 README 文件
+                        该仓库没有 README 文件
                     </div>`;
             }
         };
@@ -878,43 +1028,43 @@ ${mdText}`;
 
             const releaseList = releases.length 
                 ? releases.map((r, i) => `
-                <div id="release-${i}" class="bg-bg-2 border border-border rounded-lg mb-6 overflow-hidden">
-                    <div class="p-4 border-b border-border">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-lg font-bold text-primary">${r.name || r.tag_name}</h3>
-                                <div class="text-text-3 text-xs mt-1">
-                                    标签：${r.tag_name} · 发布于 ${new Date(r.published_at).toLocaleDateString()}
-                                    ${r.prerelease ? ' · <span class="text-yellow-500">预发布</span>' : ''}
+                    <div id="release-${i}" class="bg-bg-2 border border-border rounded-lg mb-6 overflow-hidden">
+                        <div class="p-4 border-b border-border">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-bold text-primary">${r.name || r.tag_name}</h3>
+                                    <div class="text-text-3 text-xs mt-1">
+                                        标签：${r.tag_name} · 发布于 ${new Date(r.published_at).toLocaleDateString()}
+                                        ${r.prerelease ? ' · <span class="text-yellow-500">预发布</span>' : ''}
+                                    </div>
                                 </div>
+                                <a href="${r.html_url}" target="_blank" class="text-xs text-primary hover:underline">查看详情</a>
                             </div>
-                            <a href="${r.html_url}" target="_blank" class="text-xs text-primary hover:underline">原版页面</a>
                         </div>
-                    </div>
-                    ${r.body ? `<div class="p-4 border-b border-border markdown-body">${marked.parse(r.body)}</div>` : ''}
-                    ${r.assets?.length ? `
+                        ${r.body ? `<div class="p-4 border-b border-border markdown-body">${marked.parse(r.body)}</div>` : ''}
+                        ${r.assets?.length ? `
                         <div class="p-4">
-                            <div class="text-sm font-medium text-text mb-3">下载附件（CDN加速）</div>
+                            <div class="text-sm font-medium text-text mb-3">下载资源（CDN代理）</div>
                             <div class="grid gap-2">
                                 ${r.assets.map(asset => {
                                     const fastUrl = DOWNLOAD_PROXY + asset.browser_download_url;
                                     const fileMb = (asset.size / 1024 / 1024).toFixed(2);
                                     return `
                                     <a href="${fastUrl}" target="_blank" download="${asset.name}" 
-                                       class="flex justify-between items-center p-3 bg-bg-3 rounded-md hover:border-primary border border-transparent transition-colors">
-                                        <span class="text-sm text-text-2">📎 ${asset.name}</span>
+                                        class="flex justify-between items-center p-3 bg-bg-3 rounded-md hover:border-primary border border-transparent transition-colors">
+                                        <span class="text-sm text-text-2">📦 ${asset.name}</span>
                                         <span class="text-xs text-text-3">${fileMb} MB</span>
                                     </a>`;
                                 }).join('')}
                             </div>
                         </div>` : ''}
-                </div>`).join('')
-                : '<div class="text-center text-text-3 py-20">该仓库暂无发布版本</div>';
+                    </div>`).join('')
+                : '<div class="text-center text-text-3 py-20">该仓库没有发布版本</div>';
 
             document.getElementById('main-content').innerHTML = `
                 <div class="mb-6">
                     <h1 class="text-xl font-bold">${owner} / ${repo} · Releases</h1>
-                    <p class="text-text-2 text-sm mt-1">所有文件下载自动走加速通道</p>
+                    <p class="text-text-2 text-sm mt-1">使用CDN加速下载发布资源</p>
                 </div>
                 ${releaseList}
             `;
@@ -925,7 +1075,7 @@ ${mdText}`;
             }, 0);
         };
 
-        // ========== 路由分发 ==========
+        // ========== 路由处理 ==========
         const parseRoute = () => {
             const hash = window.location.hash.slice(1).split('/').filter(Boolean);
             if (hash.length === 0) return { type: 'home' };
@@ -943,7 +1093,7 @@ ${mdText}`;
             try {
                 if (route.type === 'home') renderHome();
                 else if (route.type === 'user') {
-                    // 用户页简化处理，直接跳转到第一个仓库或显示提示
+                    // 暂不实现用户页面，这里简单提示一下
                     const user = await request('/users/' + route.name);
                     const repos = await request('/users/' + route.name + '/repos?sort=updated&per_page=30');
                     
@@ -957,7 +1107,7 @@ ${mdText}`;
                                 <div class="text-text-3 text-xs">@${route.name}</div>
                             </div>
                             <div class="prop-row"><span class="label">仓库</span><span>${user.public_repos}</span></div>
-                            <div class="prop-row"><span class="label">关注者</span><span>${user.followers}</span></div>
+                            <div class="prop-row"><span class="label">粉丝</span><span>${user.followers}</span></div>
                         </div>
                     `;
 
@@ -986,7 +1136,7 @@ ${mdText}`;
             }
         };
 
-        // ========== 全局事件绑定 ==========
+        // ========== 事件初始化 ==========
         const initEvents = () => {
             // 主题切换
             document.getElementById('theme-select').addEventListener('change', e => {
@@ -997,7 +1147,7 @@ ${mdText}`;
                 document.getElementById('hljs-style').href = `https://cdn.jsdelivr.net/npm/highlight.js@11/styles/${hljsName}.min.css`;
             });
 
-            // 搜索回车跳转
+            // 搜索框回车
             document.getElementById('search-input').addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
                     const rawVal = e.target.value.trim();
@@ -1040,7 +1190,7 @@ ${mdText}`;
             window.addEventListener('hashchange', handleRoute);
         };
 
-        // ========== 页面初始化 ==========
+        // ========== 初始化执行 ==========
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = storage.get('theme') || 'ayu-dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -1049,6 +1199,7 @@ ${mdText}`;
             document.getElementById('hljs-style').href = `https://cdn.jsdelivr.net/npm/highlight.js@11/styles/${hljsName}.min.css`;
 
             initEvents();
+            initSidebar();   // ← 新增：初始化侧边栏拖拽与展开按钮
             handleRoute();
         });
     </script>
