@@ -1,0 +1,1056 @@
+<!-- ===================== 全局配置区（所有配置集中在此，请在此处修改） ===================== -->
+<script>
+window.GLOBAL_CONFIG = {
+    // ---------- GitHub 基础配置 ----------
+    GITHUB_API_BASE: 'https://api.github.com',
+    // 下载文件代理加速地址
+    DOWNLOAD_PROXY: 'https://cdn.gh-proxy.org/',
+
+    // ---------- 翻译 API 配置（Agnes-AI 兼容 OpenAI 格式） ----------
+    // API 接口地址（结尾无需斜杠，兼容 /v1/chat/completions 规范）
+    TRANSLATE_API_BASE: 'https://apihub.agnes-ai.com/v1',
+    // 使用的模型名称
+    TRANSLATE_MODEL: 'agnes-2.0-flash',
+    // API 密钥【请在此处粘贴你的密钥，或在页面设置面板中填写】
+    TRANSLATE_API_KEY: '',
+
+
+    // ---------- 功能开关 ----------
+    ENABLE_IMAGE_PROXY: true,  // 是否开启 raw 图片加速
+    DEFAULT_BRANCH: 'main',    // 默认分支名
+};
+</script>
+<!-- =================================================================================== -->
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="ayu-dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub 阅读器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/atom-one-dark.min.css" id="hljs-style">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: 'var(--bg)',
+                        'bg-2': 'var(--bg-secondary)',
+                        'bg-3': 'var(--bg-tertiary)',
+                        text: 'var(--text)',
+                        'text-2': 'var(--text-secondary)',
+                        'text-3': 'var(--text-muted)',
+                        primary: 'var(--primary)',
+                        accent: 'var(--accent)',
+                        border: 'var(--border)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* ========== 主题变量 ========== */
+        [data-theme="ayu-dark"] {
+            --bg: #0b0e14; --bg-secondary: #0f1419; --bg-tertiary: #141920;
+            --text: #e6e1cf; --text-secondary: #b3b1ad; --text-muted: #5c6773;
+            --primary: #ffb454; --accent: #39bae6; --border: #1f2937;
+        }
+        [data-theme="catppuccin-mocha"] {
+            --bg: #1e1e2e; --bg-secondary: #282838; --bg-tertiary: #313244;
+            --text: #cdd6f4; --text-secondary: #bac2de; --text-muted: #6c7086;
+            --primary: #cba6f7; --accent: #89b4fa; --border: #45475a;
+        }
+        [data-theme="github-dark"] {
+            --bg: #0d1117; --bg-secondary: #161b22; --bg-tertiary: #21262d;
+            --text: #f0f6fc; --text-secondary: #c9d1d9; --text-muted: #8b949e;
+            --primary: #58a6ff; --accent: #238636; --border: #30363d;
+        }
+        [data-theme="dracula"] {
+            --bg: #282a36; --bg-secondary: #21222c; --bg-tertiary: #44475a;
+            --text: #f8f8f2; --text-secondary: #bd93f9; --text-muted: #6272a;
+            --primary: #bd93f9; --accent: #ff79c6; --border: #44475a;
+        }
+        [data-theme="monokai"] {
+            --bg: #272822; --bg-secondary: #1e1f1c; --bg-tertiary: #3e3d32;
+            --text: #f8f8f2; --text-secondary: #a6e22e; --text-muted: #75715e;
+            --primary: #f92672; --accent: #66d9ef; --border: #49483e;
+        }
+        [data-theme="nord"] {
+            --bg: #2e3440; --bg-secondary: #3b4252; --bg-tertiary: #434c5e;
+            --text: #eceff4; --text-secondary: #d8dee9; --text-muted: #4c566a;
+            --primary: #88c0d0; --accent: #5e81ac; --border: #4c566a;
+        }
+        [data-theme="one-dark"] {
+            --bg: #282c34; --bg-secondary: #21252b; --bg-tertiary: #373c44;
+            --text: #abb2bf; --text-secondary: #c678dd; --text-muted: #5c6370;
+            --primary: #61afef; --accent: #98c379; --border: #3e4451;
+        }
+        [data-theme="ayu-light"] {
+            --bg: #fafafa; --bg-secondary: #f3f4f5; --bg-tertiary: #e8e9eb;
+            --text: #5c6773; --text-secondary: #6b7680; --text-muted: #8a9199;
+            --primary: #ff9940; --accent: #41a6d9; --border: #e6e7e9;
+        }
+        [data-theme="catppuccin-latte"] {
+            --bg: #eff1f5; --bg-secondary: #e6e9ef; --bg-tertiary: #dce0e8;
+            --text: #4c4f69; --text-secondary: #5c5f77; --text-muted: #7c7f93;
+            --primary: #8839ef; --accent: #1e66f5; --border: #ccd0da;
+        }
+        [data-theme="github-light"] {
+            --bg: #ffffff; --bg-secondary: #f6f8fa; --bg-tertiary: #e1e4e8;
+            --text: #24292f; --text-secondary: #57606a; --text-muted: #8b949e;
+            --primary: #0969da; --accent: #1a7f37; --border: #d0d7de;
+        }
+
+        html, body { background: var(--bg); color: var(--text); height: 100%; overflow: hidden; margin: 0; }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ========== 三栏布局核心 ========== */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .panel-left, .panel-right {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-2);
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+            transition: width 0.2s ease;
+        }
+        .panel-right { border-right: none; border-left: 1px solid var(--border); }
+        .panel-left.collapsed, .panel-right.collapsed { width: 0 !important; border: none; }
+        .panel-header {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .panel-center {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 24px;
+        }
+        .panel-toggle-btn {
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .panel-toggle-btn:hover { color: var(--primary); background: var(--bg-3); }
+
+        /* ========== 文件树样式 ========== */
+        .file-tree { padding: 4px 0; font-size: 13px; }
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-secondary);
+        }
+        .tree-item:hover { background: var(--bg-3); color: var(--text); }
+        .tree-item.active { background: var(--bg-3); color: var(--primary); }
+        .tree-item.dir { font-weight: 500; }
+        .tree-arrow {
+            width: 12px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform 0.15s ease;
+            flex-shrink: 0;
+        }
+        .tree-item.expanded .tree-arrow { transform: rotate(90deg); }
+        .tree-children { display: none; }
+        .tree-item.expanded + .tree-children { display: block; }
+        .tree-children .tree-item { padding-left: 28px; }
+        .tree-children .tree-children .tree-item { padding-left: 44px; }
+        .tree-icon { flex-shrink: 0; font-size: 14px; }
+
+        /* ========== Markdown 样式 ========== */
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--text); font-weight: 600; margin: 1.2em 0 0.5em; }
+        .markdown-body h1 { font-size: 1.8em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+        .markdown-body h2 { font-size: 1.4em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+        .markdown-body p { margin: 1em 0; color: var(--text-secondary); line-height: 1.7; }
+        .markdown-body code { background: var(--bg-3); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
+        .markdown-body pre {
+            background: var(--bg-3) !important;
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1em 0;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .markdown-body pre code { background: transparent; padding: 0; }
+        .markdown-body ul, .markdown-body ol { padding-left: 2em; color: var(--text-secondary); margin: 1em 0; }
+        .markdown-body blockquote { border-left: 4px solid var(--primary); padding: 0.5em 1em; margin: 1em 0; color: var(--text-3); background: var(--bg-2); border-radius: 0 4px 4px 0; }
+        .markdown-body a { color: var(--accent); text-decoration: none; }
+        .markdown-body a:hover { text-decoration: underline; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+        .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 0.5em 1em; text-align: left; }
+        .markdown-body th { background: var(--bg-2); }
+        .markdown-body img { max-width: 100%; border-radius: 4px; }
+
+        /* 代码块复制按钮 */
+        .code-copy-btn {
+            position: absolute;
+            top: 8px; right: 8px; z-index: 10;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity .2s, border-color .2s, color .2s;
+        }
+        pre:hover .code-copy-btn { opacity: 1; }
+        .code-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .code-copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+
+        /* 操作按钮悬浮层 */
+        .action-bar {
+            position: absolute;
+            top: 12px; right: 12px; z-index: 99;
+            display: flex; gap: 8px;
+        }
+        .action-btn {
+            background: var(--bg-3);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--primary);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: border-color .2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .action-btn:hover { border-color: var(--primary); }
+        .action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* 属性面板样式 */
+        .prop-section { padding: 12px; border-bottom: 1px solid var(--border); }
+        .prop-section-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; }
+        .prop-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: var(--text-secondary); }
+        .prop-row .label { color: var(--text-muted); }
+        .lang-bar { height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; margin: 6px 0; }
+        .lang-bar-fill { height: 100%; background: var(--primary); }
+        .release-item {
+            display: block;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .release-item:hover { background: var(--bg-3); color: var(--primary); }
+        .release-tag { font-weight: 500; }
+        .release-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部导航 -->
+        <header class="h-14 border-b border-border bg-bg-2 flex items-center px-4 gap-4 flex-shrink-0">
+            <div class="text-primary font-bold">GH Reader</div>
+            <div class="flex-1 max-w-xl">
+                <input id="search-input" type="text" placeholder="粘贴Github链接 / owner/repo / 用户名，回车跳转" 
+                    class="w-full bg-bg-3 border border-border rounded-md px-3 py-1.5 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary">
+            </div>
+            <select id="theme-select" class="bg-bg-3 border border-border rounded-md px-2 py-1.5 text-sm text-text focus:outline-none focus:border-primary">
+                <optgroup label="暗色主题">
+                    <option value="ayu-dark">Ayu Dark</option>
+                    <option value="catppuccin-mocha">Catppuccin Mocha</option>
+                    <option value="github-dark">GitHub Dark</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="monokai">Monokai</option>
+                    <option value="nord">Nord</option>
+                    <option value="one-dark">One Dark</option>
+                </optgroup>
+                <optgroup label="亮色主题">
+                    <option value="ayu-light">Ayu Light</option>
+                    <option value="catppuccin-latte">Catppuccin Latte</option>
+                    <option value="github-light">GitHub Light</option>
+                </optgroup>
+            </select>
+            <button id="settings-btn" class="bg-bg-3 border border-border rounded-md px-3 py-1.5 text-sm hover:border-primary transition-colors">设置</button>
+        </header>
+
+        <!-- 三栏主体 -->
+        <div class="main-layout">
+            <!-- 左栏：文件树 -->
+            <aside id="panel-left" class="panel-left" style="width: 280px;">
+                <div class="panel-header">
+                    <span>资源管理器</span>
+                    <span class="panel-toggle-btn" onclick="togglePanel('left')">◀</span>
+                </div>
+                <div id="file-tree" class="panel-content file-tree">
+                    <div class="p-3 text-text-3 text-sm">请先打开一个仓库</div>
+                </div>
+            </aside>
+
+            <!-- 中栏：内容区 -->
+            <section id="panel-center" class="panel-center scrollbar-thin">
+                <div id="main-content" class="max-w-4xl mx-auto">
+                    <div class="text-center mt-20">
+                        <h2 class="text-2xl font-bold text-text mb-2">GitHub 阅读器</h2>
+                        <p class="text-text-2 mb-2">VS Code 风格三栏布局 · 支持图片加速 · AI 翻译</p>
+                        <p class="text-text-3 text-sm">在顶部输入框粘贴仓库地址开始浏览</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 右栏：属性面板 -->
+            <aside id="panel-right" class="panel-right" style="width: 300px;">
+                <div class="panel-header">
+                    <span>属性</span>
+                    <span class="panel-toggle-btn" onclick="togglePanel('right')">▶</span>
+                </div>
+                <div id="prop-panel" class="panel-content">
+                    <div class="p-3 text-text-3 text-sm">暂无仓库信息</div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-bg-2 border border-border rounded-lg w-full max-w-md p-5 mx-4">
+            <h3 class="text-lg font-bold mb-4">设置</h3>
+            
+            <label class="block text-sm text-text-2 mb-2">GitHub Personal Access Token</label>
+            <input id="token-input" type="password" placeholder="ghp_xxxxxxxx" 
+                class="w-full bg-bg-3 border border-border rounded-md px-3 py-2 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary mb-2">
+            <p class="text-text-3 text-xs mb-4">仅保存在本地浏览器，不会上传任何服务器</p>
+
+            <div class="border-t border-border pt-4 mb-4">
+                <div class="text-sm font-medium text-text mb-2">翻译 API 设置</div>
+                <label class="block text-sm text-text-2 mb-2">API 密钥</label>
+                <input id="translate-api-key" type="password" placeholder="请输入 Agnes-AI API 密钥" 
+                    class="w-full bg-bg-3 border border-border rounded-md px-3 py-2 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary mb-2">
+                <p class="text-text-3 text-xs">密钥仅保存在本地浏览器</p>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button id="close-settings" class="px-4 py-2 text-sm border border-border rounded-md hover:border-primary transition-colors">关闭</button>
+                <button id="save-settings" class="px-4 py-2 text-sm bg-primary text-bg rounded-md hover:opacity-90 transition-opacity">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 全局配置与状态 ==========
+        const CONFIG = window.GLOBAL_CONFIG;
+        const API_BASE = CONFIG.GITHUB_API_BASE;
+        const DOWNLOAD_PROXY = CONFIG.DOWNLOAD_PROXY;
+        const cache = new Map();
+        const dirCache = new Map(); // 目录内容缓存
+
+        let currentRepo = { owner: '', repo: '', branch: CONFIG.DEFAULT_BRANCH, path: '' };
+        let globalRawMd = "";
+        let globalTranslatedMd = "";
+        let isTranslated = false;
+        let isTranslating = false;
+
+        // 主题映射
+        const HLJS_THEME_MAP = {
+            'ayu-dark': 'atom-one-dark', 'catppuccin-mocha': 'atom-one-dark',
+            'github-dark': 'github-dark', 'dracula': 'dracula',
+            'monokai': 'monokai', 'nord': 'nord',
+            'one-dark': 'atom-one-dark', 'ayu-light': 'atom-one-light',
+            'catppuccin-latte': 'atom-one-light', 'github-light': 'github',
+        };
+
+        // ========== 工具函数 ==========
+        const storage = {
+            get: key => { try { return JSON.parse(localStorage.getItem('ghr_' + key)) } catch { return null } },
+            set: (key, val) => localStorage.setItem('ghr_' + key, JSON.stringify(val))
+        };
+
+        async function copyToClipboard(text) {
+            try { await navigator.clipboard.writeText(text); return true; }
+            catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+                document.body.removeChild(ta); return true;
+            }
+        }
+
+        function bindCodeCopyButtons(container = document) {
+            container.querySelectorAll('pre').forEach(pre => {
+                if (pre.querySelector('.code-copy-btn')) return;
+                const btn = document.createElement('button');
+                btn.className = 'code-copy-btn';
+                btn.innerText = '复制';
+                btn.onclick = async () => {
+                    const code = pre.querySelector('code');
+                    const ok = await copyToClipboard(code ? code.innerText : pre.innerText);
+                    if (ok) { btn.innerText = '已复制'; btn.classList.add('copied');
+                        setTimeout(() => { btn.innerText = '复制'; btn.classList.remove('copied'); }, 1500); }
+                };
+                pre.appendChild(btn);
+            });
+        }
+
+        // ========== 图片加速 ==========
+        function proxyImages(container, owner, repo, branch, currentPath) {
+            if (!CONFIG.ENABLE_IMAGE_PROXY) return;
+            const imgs = container.querySelectorAll('img');
+            const baseRawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}`;
+
+            imgs.forEach(img => {
+                const src = img.getAttribute('src') || '';
+                if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+
+                let rawUrl;
+                if (src.startsWith('http')) {
+                    if (src.includes('raw.githubusercontent.com')) {
+                        rawUrl = src;
+                    } else {
+                        return;
+                    }
+                } else {
+                    const dirPath = currentPath.includes('/') ? currentPath.substring(0, currentPath.lastIndexOf('/')) : '';
+                    const fullPath = dirPath ? `${dirPath}/${src}` : src;
+                    rawUrl = `${baseRawUrl}/${fullPath}`;
+                }
+
+                const proxiedUrl = DOWNLOAD_PROXY + rawUrl;
+                img.setAttribute('data-original-src', rawUrl);
+                img.src = proxiedUrl;
+
+                img.onerror = function() {
+                    if (this.src !== rawUrl) {
+                        this.src = rawUrl;
+                        this.onerror = null;
+                    }
+                };
+            });
+        }
+
+        // ========== GitHub 请求 ==========
+        const request = async (path) => {
+            if (cache.has(path)) return cache.get(path);
+            const token = storage.get('github_token');
+            const headers = { Accept: 'application/vnd.github.v3+json' };
+            if (token) headers.Authorization = 'token ' + token;
+
+            const res = await fetch(API_BASE + path, { headers });
+            if (res.status === 403 && res.headers.get('X-RateLimit-Remaining') === '0') {
+                throw new Error('API 请求已达上限，请在设置中填写 PAT');
+            }
+            if (!res.ok) throw new Error('请求失败：' + res.status + ' ' + res.statusText);
+            
+            const data = await res.json();
+            cache.set(path, data);
+            return data;
+        };
+
+        const decodeBase64 = str => {
+            try { return decodeURIComponent(escape(window.atob(str))) }
+            catch { return window.atob(str) }
+        };
+
+        const escapeHtml = str => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+
+        function parseInputText(inputText) {
+            let text = inputText.trim();
+            text = text.replace(/^https?:\/\//, '').replace(/^github\.com\//, '');
+            return text;
+        }
+
+        function isMarkdownFile(filename) {
+            return filename.toLowerCase().endsWith('.md') || filename.toLowerCase().endsWith('.markdown');
+        }
+
+        // ========== 翻译功能 ==========
+        async function translateMarkdown(mdText) {
+            const apiKey = storage.get('translate_api_key') || CONFIG.TRANSLATE_API_KEY;
+            if (!apiKey) throw new Error("未配置 API 密钥，请在设置面板中填写");
+
+            const apiBase = CONFIG.TRANSLATE_API_BASE.replace(/\/$/, '');
+            const url = `${apiBase}/chat/completions`;
+
+            const prompt = `你是专业的技术文档翻译官。请将下面的英文 Markdown 技术文档翻译成简体中文。
+要求：
+1. 技术术语准确，保留通用英文缩写
+2. 代码块、命令行、变量名、函数名、文件名原样保留
+3. 严格保留 Markdown 格式、标题层级、列表、表格
+4. 只输出翻译后的 Markdown 内容，不要多余文字
+
+待翻译原文：
+${mdText}`;
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: CONFIG.TRANSLATE_MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3 })
+            });
+
+            if (!res.ok) {
+                let errMsg = res.statusText;
+                try { const err = await res.json(); errMsg = err.error?.message || errMsg; } catch {}
+                throw new Error(`翻译失败 (${res.status})：${errMsg}`);
+            }
+
+            const data = await res.json();
+            return data.choices[0].message.content.trim();
+        }
+
+        function bindTranslateButton(rawMdText) {
+            globalRawMd = rawMdText;
+            globalTranslatedMd = "";
+            isTranslated = false;
+            
+            const transBtn = document.getElementById("trigger-translate");
+            const mdBox = document.getElementById("md-container");
+            if (!transBtn || !mdBox) return;
+
+            transBtn.disabled = false;
+            transBtn.innerText = "🌐 翻译/原文";
+
+            transBtn.onclick = async () => {
+                if (isTranslating) return;
+
+                if (isTranslated) {
+                    mdBox.innerHTML = marked.parse(globalRawMd);
+                    transBtn.innerText = "🌐 翻译/原文";
+                    isTranslated = false;
+                    mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    bindCodeCopyButtons(mdBox);
+                    proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                    return;
+                }
+
+                if (globalTranslatedMd) {
+                    mdBox.innerHTML = marked.parse(globalTranslatedMd);
+                    transBtn.innerText = "↩ 恢复原文";
+                    isTranslated = true;
+                    mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    bindCodeCopyButtons(mdBox);
+                    proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                    return;
+                }
+
+                isTranslating = true;
+                transBtn.disabled = true;
+                transBtn.innerText = "翻译中...";
+
+                try {
+                    globalTranslatedMd = await translateMarkdown(globalRawMd);
+                    mdBox.innerHTML = marked.parse(globalTranslatedMd);
+                    transBtn.innerText = "↩ 恢复原文";
+                    isTranslated = true;
+                    mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    bindCodeCopyButtons(mdBox);
+                    proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                } catch (e) {
+                    console.error("翻译失败：", e);
+                    alert(e.message);
+                    transBtn.innerText = "🌐 翻译/原文";
+                } finally {
+                    isTranslating = false;
+                    transBtn.disabled = false;
+                }
+            };
+        }
+
+        // ========== 面板折叠 ==========
+        function togglePanel(side) {
+            const panel = document.getElementById('panel-' + side);
+            panel.classList.toggle('collapsed');
+            const btn = panel.querySelector('.panel-toggle-btn');
+            if (panel.classList.contains('collapsed')) {
+                btn.innerText = side === 'left' ? '▶' : '◀';
+            } else {
+                btn.innerText = side === 'left' ? '◀' : '▶';
+            }
+        }
+
+        // ========== 文件树（VS Code 风格展开/折叠） ==========
+        async function loadFileTree(owner, repo, path = '') {
+            const cacheKey = `${owner}/${repo}/${path}`;
+            if (dirCache.has(cacheKey)) return dirCache.get(cacheKey);
+
+            try {
+                const data = await request(`/repos/${owner}/${repo}/contents/${path}`);
+                data.sort((a, b) => {
+                    if (a.type === b.type) return a.name.localeCompare(b.name);
+                    return a.type === 'dir' ? -1 : 1;
+                });
+                dirCache.set(cacheKey, data);
+                return data;
+            } catch (e) {
+                console.error('加载目录失败:', e);
+                return [];
+            }
+        }
+
+        function renderFileTree(items, parentPath = '', level = 0) {
+            let html = '';
+            items.forEach(item => {
+                const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+                const isDir = item.type === 'dir';
+                const isActive = fullPath === currentRepo.path;
+
+                if (isDir) {
+                    html += `
+                        <div class="tree-item dir" data-path="${fullPath}" onclick="toggleDir(this, '${fullPath}')">
+                            <span class="tree-arrow">▶</span>
+                            <span class="tree-icon">📁</span>
+                            <span>${item.name}</span>
+                        </div>
+                        <div class="tree-children" data-path="${fullPath}"></div>`;
+                } else {
+                    html += `
+                        <div class="tree-item file ${isActive ? 'active' : ''}" data-path="${fullPath}" onclick="openFile('${fullPath}')">
+                            <span class="tree-arrow"></span>
+                            <span class="tree-icon">📄</span>
+                            <span>${item.name}</span>
+                        </div>`;
+                }
+            });
+            return html;
+        }
+
+        async function toggleDir(el, path) {
+            const isExpanded = el.classList.contains('expanded');
+            const childrenEl = el.nextElementSibling;
+
+            if (isExpanded) {
+                el.classList.remove('expanded');
+                return;
+            }
+
+            el.classList.add('expanded');
+            if (childrenEl.innerHTML.trim()) return;
+
+            const items = await loadFileTree(currentRepo.owner, currentRepo.repo, path);
+            childrenEl.innerHTML = renderFileTree(items, path, 1);
+        }
+
+        async function initFileTree(owner, repo) {
+            currentRepo.owner = owner;
+            currentRepo.repo = repo;
+            const items = await loadFileTree(owner, repo, '');
+            document.getElementById('file-tree').innerHTML = renderFileTree(items, '');
+        }
+
+        async function openFile(path) {
+            currentRepo.path = path;
+            document.querySelectorAll('#file-tree .tree-item.file').forEach(el => {
+                el.classList.toggle('active', el.dataset.path === path);
+            });
+
+            try {
+                const data = await request(`/repos/${currentRepo.owner}/${currentRepo.repo}/contents/${path}`);
+                renderFileContent(data);
+            } catch (e) {
+                document.getElementById('main-content').innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="text-red-400 mb-2">加载失败</div>
+                        <div class="text-text-3">${e.message}</div>
+                    </div>`;
+            }
+        }
+
+        // ========== 属性面板 ==========
+        function renderPropPanel(repoInfo, langData, releases) {
+            const langTotal = Object.values(langData).reduce((a,b)=>a+b, 0);
+            const langList = Object.entries(langData)
+                .map(([name, size]) => ({ name, percent: ((size / langTotal) * 100).toFixed(1) }))
+                .sort((a, b) => b.percent - a.percent);
+
+            const topLang = langList.slice(0, 5);
+            const langBars = topLang.map(l => `
+                <div class="prop-row">
+                    <span class="label">${l.name}</span>
+                    <span>${l.percent}%</span>
+                </div>
+                <div class="lang-bar"><div class="lang-bar-fill" style="width: ${l.percent}%"></div></div>
+            `).join('');
+
+            const releaseHtml = releases.slice(0, 5).map(r => `
+                <div class="release-item" onclick="jumpToReleases()">
+                    <div class="release-tag">${r.tag_name}</div>
+                    <div class="release-date">${new Date(r.published_at).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('prop-panel').innerHTML = `
+                <div class="prop-section">
+                    <div class="prop-section-title">仓库概览</div>
+                    <div class="prop-row"><span class="label">Stars</span><span>${repoInfo.stargazers_count.toLocaleString()}</span></div>
+                    <div class="prop-row"><span class="label">Forks</span><span>${repoInfo.forks_count.toLocaleString()}</span></div>
+                    <div class="prop-row"><span class="label">Issues</span><span>${repoInfo.open_issues_count.toLocaleString()}</span></div>
+                    <div class="prop-row"><span class="label">许可证</span><span>${repoInfo.license?.spdx_id || '-'}</span></div>
+                    <div class="prop-row"><span class="label">更新时间</span><span>${new Date(repoInfo.updated_at).toLocaleDateString()}</span></div>
+                    <a href="${repoInfo.html_url}" target="_blank" class="block text-center mt-2 text-xs text-primary hover:underline">在 GitHub 中打开</a>
+                </div>
+
+                <div class="prop-section">
+                    <div class="prop-section-title">语言分布</div>
+                    ${langBars || '<div class="text-text-3 text-xs">暂无数据</div>'}
+                </div>
+
+                <div class="prop-section">
+                    <div class="prop-section-title">最新版本</div>
+                    ${releaseHtml || '<div class="text-text-3 text-xs">暂无版本</div>'}
+                </div>
+            `;
+        }
+
+        function jumpToReleases() {
+            window.location.hash = `/${currentRepo.owner}/${currentRepo.repo}/releases`;
+        }
+
+        // ========== 内容渲染 ==========
+        function renderFileContent(fileData) {
+            const rawContent = decodeBase64(fileData.content);
+            const proxyUrl = DOWNLOAD_PROXY + fileData.download_url;
+            const filename = fileData.name;
+
+            let html = '';
+            if (isMarkdownFile(filename)) {
+                html = `
+                <div class="relative">
+                    <div class="action-bar">
+                        <button class="action-btn" id="copy-file-btn">📋 复制</button>
+                        <a href="${proxyUrl}" target="_blank" download="${filename}" class="action-btn">⬇ 下载</a>
+                        <button class="action-btn" id="trigger-translate">🌐 翻译/原文</button>
+                    </div>
+                    <div id="md-container" class="markdown-body bg-bg-2 border border-border rounded-lg p-6 pt-12">
+                        ${marked.parse(rawContent)}
+                    </div>
+                </div>`;
+
+                setTimeout(() => {
+                    bindTranslateButton(rawContent);
+                    document.querySelectorAll('#md-container pre code').forEach(block => hljs.highlightElement(block));
+                    bindCodeCopyButtons(document.getElementById('md-container'));
+                    proxyImages(document.getElementById('md-container'), currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+
+                    document.getElementById('copy-file-btn').onclick = async () => {
+                        const ok = await copyToClipboard(rawContent);
+                        if (ok) {
+                            const btn = document.getElementById('copy-file-btn');
+                            const orig = btn.innerText;
+                            btn.innerText = '✅ 已复制';
+                            setTimeout(() => btn.innerText = orig, 1500);
+                        }
+                    };
+                }, 0);
+            } else {
+                html = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-text-2 text-sm">${filename}</span>
+                    <div class="flex gap-2">
+                        <button class="action-btn text-sm" id="copy-file-btn">📋 复制</button>
+                        <a href="${proxyUrl}" target="_blank" download="${filename}" class="action-btn text-sm">⬇ 下载</a>
+                    </div>
+                </div>
+                <pre style="position:relative;"><code class="language-${filename.split('.').pop()}">${escapeHtml(rawContent)}</code></pre>`;
+
+                setTimeout(() => {
+                    document.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    bindCodeCopyButtons();
+                    document.getElementById('copy-file-btn').onclick = async () => {
+                        const ok = await copyToClipboard(rawContent);
+                        if (ok) {
+                            const btn = document.getElementById('copy-file-btn');
+                            btn.innerText = '✅ 已复制';
+                            setTimeout(() => btn.innerText = '📋 复制', 1500);
+                        }
+                    };
+                }, 0);
+            }
+
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        const renderHome = () => {
+            document.getElementById('file-tree').innerHTML = '<div class="p-3 text-text-3 text-sm">请先打开一个仓库</div>';
+            document.getElementById('prop-panel').innerHTML = '<div class="p-3 text-text-3 text-sm">暂无仓库信息</div>';
+            document.getElementById('main-content').innerHTML = `
+                <div class="text-center mt-20">
+                    <h2 class="text-2xl font-bold text-text mb-2">GitHub 阅读器</h2>
+                    <p class="text-text-2 mb-2">VS Code 风格三栏布局 · 支持图片加速 · AI 翻译</p>
+                    <p class="text-text-3 text-sm">在顶部输入框粘贴仓库地址开始浏览</p>
+                </div>`;
+        };
+
+        const renderRepo = async (owner, repo, path = '') => {
+            currentRepo = { owner, repo, branch: CONFIG.DEFAULT_BRANCH, path: '' };
+
+            const [repoInfo, langData, readme, releases] = await Promise.all([
+                request(`/repos/${owner}/${repo}`),
+                request(`/repos/${owner}/${repo}/languages`).catch(() => ({})),
+                request(`/repos/${owner}/${repo}/readme`).catch(() => null),
+                request(`/repos/${owner}/${repo}/releases?per_page=10`).catch(() => [])
+            ]);
+
+            initFileTree(owner, repo);
+            renderPropPanel(repoInfo, langData, releases);
+
+            if (readme) {
+                const rawContent = decodeBase64(readme.content);
+                currentRepo.path = 'README.md';
+
+                document.getElementById('main-content').innerHTML = `
+                <div class="relative">
+                    <div class="action-bar">
+                        <button class="action-btn" id="copy-file-btn">📋 复制</button>
+                        <a href="${DOWNLOAD_PROXY + readme.download_url}" target="_blank" download="README.md" class="action-btn">⬇ 下载</a>
+                        <button class="action-btn" id="trigger-translate">🌐 翻译/原文</button>
+                    </div>
+                    <div id="md-container" class="markdown-body bg-bg-2 border border-border rounded-lg p-6 pt-12">
+                        ${marked.parse(rawContent)}
+                    </div>
+                </div>`;
+
+                setTimeout(() => {
+                    bindTranslateButton(rawContent);
+                    document.querySelectorAll('#md-container pre code').forEach(block => hljs.highlightElement(block));
+                    bindCodeCopyButtons(document.getElementById('md-container'));
+                    proxyImages(document.getElementById('md-container'), owner, repo, CONFIG.DEFAULT_BRANCH, 'README.md');
+
+                    document.getElementById('copy-file-btn').onclick = async () => {
+                        const ok = await copyToClipboard(rawContent);
+                        if (ok) {
+                            const btn = document.getElementById('copy-file-btn');
+                            btn.innerText = '✅ 已复制';
+                            setTimeout(() => btn.innerText = '📋 复制', 1500);
+                        }
+                    };
+                }, 0);
+            } else {
+                document.getElementById('main-content').innerHTML = `
+                    <div class="text-center py-20 text-text-3">
+                        该仓库暂无 README 文件
+                    </div>`;
+            }
+        };
+
+        const renderReleases = async (owner, repo) => {
+            const [repoInfo, releases] = await Promise.all([
+                request(`/repos/${owner}/${repo}`),
+                request(`/repos/${owner}/${repo}/releases?per_page=20`)
+            ]);
+
+            currentRepo = { owner, repo, branch: CONFIG.DEFAULT_BRANCH, path: '' };
+            initFileTree(owner, repo);
+            renderPropPanel(repoInfo, {}, releases);
+
+            const releaseList = releases.length 
+                ? releases.map((r, i) => `
+                <div id="release-${i}" class="bg-bg-2 border border-border rounded-lg mb-6 overflow-hidden">
+                    <div class="p-4 border-b border-border">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-bold text-primary">${r.name || r.tag_name}</h3>
+                                <div class="text-text-3 text-xs mt-1">
+                                    标签：${r.tag_name} · 发布于 ${new Date(r.published_at).toLocaleDateString()}
+                                    ${r.prerelease ? ' · <span class="text-yellow-500">预发布</span>' : ''}
+                                </div>
+                            </div>
+                            <a href="${r.html_url}" target="_blank" class="text-xs text-primary hover:underline">原版页面</a>
+                        </div>
+                    </div>
+                    ${r.body ? `<div class="p-4 border-b border-border markdown-body">${marked.parse(r.body)}</div>` : ''}
+                    ${r.assets?.length ? `
+                        <div class="p-4">
+                            <div class="text-sm font-medium text-text mb-3">下载附件（CDN加速）</div>
+                            <div class="grid gap-2">
+                                ${r.assets.map(asset => {
+                                    const fastUrl = DOWNLOAD_PROXY + asset.browser_download_url;
+                                    const fileMb = (asset.size / 1024 / 1024).toFixed(2);
+                                    return `
+                                    <a href="${fastUrl}" target="_blank" download="${asset.name}" 
+                                       class="flex justify-between items-center p-3 bg-bg-3 rounded-md hover:border-primary border border-transparent transition-colors">
+                                        <span class="text-sm text-text-2">📎 ${asset.name}</span>
+                                        <span class="text-xs text-text-3">${fileMb} MB</span>
+                                    </a>`;
+                                }).join('')}
+                            </div>
+                        </div>` : ''}
+                </div>`).join('')
+                : '<div class="text-center text-text-3 py-20">该仓库暂无发布版本</div>';
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="mb-6">
+                    <h1 class="text-xl font-bold">${owner} / ${repo} · Releases</h1>
+                    <p class="text-text-2 text-sm mt-1">所有文件下载自动走加速通道</p>
+                </div>
+                ${releaseList}
+            `;
+
+            setTimeout(() => {
+                document.querySelectorAll('.markdown-body pre code').forEach(block => hljs.highlightElement(block));
+                bindCodeCopyButtons();
+            }, 0);
+        };
+
+        // ========== 路由分发 ==========
+        const parseRoute = () => {
+            const hash = window.location.hash.slice(1).split('/').filter(Boolean);
+            if (hash.length === 0) return { type: 'home' };
+            if (hash.length === 1) return { type: 'user', name: hash[0] };
+            
+            const [owner, repo, ...rest] = hash;
+            if (rest[0] === 'releases') return { type: 'releases', owner, repo };
+            return { type: 'repo', owner, repo, path: rest.join('/') };
+        };
+
+        const handleRoute = async () => {
+            const route = parseRoute();
+            document.getElementById('main-content').innerHTML = '<div class="text-center text-text-3 py-20">加载中...</div>';
+            
+            try {
+                if (route.type === 'home') renderHome();
+                else if (route.type === 'user') {
+                    // 用户页简化处理，直接跳转到第一个仓库或显示提示
+                    const user = await request('/users/' + route.name);
+                    const repos = await request('/users/' + route.name + '/repos?sort=updated&per_page=30');
+                    
+                    document.getElementById('file-tree').innerHTML = '<div class="p-3 text-text-3 text-sm">用户主页</div>';
+                    document.getElementById('prop-panel').innerHTML = `
+                        <div class="prop-section">
+                            <div class="prop-section-title">用户信息</div>
+                            <div class="text-center mb-2">
+                                <img src="${user.avatar_url}" class="w-16 h-16 rounded-full mx-auto mb-2" alt="">
+                                <div class="font-bold">${user.name || route.name}</div>
+                                <div class="text-text-3 text-xs">@${route.name}</div>
+                            </div>
+                            <div class="prop-row"><span class="label">仓库</span><span>${user.public_repos}</span></div>
+                            <div class="prop-row"><span class="label">关注者</span><span>${user.followers}</span></div>
+                        </div>
+                    `;
+
+                    document.getElementById('main-content').innerHTML = `
+                        <h1 class="text-2xl font-bold mb-4">${user.name || route.name}</h1>
+                        ${user.bio ? `<p class="text-text-2 mb-6">${user.bio}</p>` : ''}
+                        <div class="grid gap-3">
+                            ${repos.map(r => `
+                                <a href="#/${r.full_name}" class="block bg-bg-2 border border-border rounded-lg p-4 hover:border-primary transition-colors">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-medium text-primary">${r.full_name}</span>
+                                        <span class="text-text-3 text-xs">⭐ ${r.stargazers_count}</span>
+                                    </div>
+                                    ${r.description ? `<p class="text-text-2 text-sm line-clamp-2">${r.description}</p>` : ''}
+                                </a>`).join('')}
+                        </div>`;
+                }
+                else if (route.type === 'releases') await renderReleases(route.owner, route.repo);
+                else await renderRepo(route.owner, route.repo, route.path);
+            } catch (err) {
+                document.getElementById('main-content').innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="text-red-400 mb-2">出错了</div>
+                        <div class="text-text-3">${err.message}</div>
+                    </div>`;
+            }
+        };
+
+        // ========== 全局事件绑定 ==========
+        const initEvents = () => {
+            // 主题切换
+            document.getElementById('theme-select').addEventListener('change', e => {
+                const theme = e.target.value;
+                document.documentElement.setAttribute('data-theme', theme);
+                storage.set('theme', theme);
+                const hljsName = HLJS_THEME_MAP[theme] || 'atom-one-dark';
+                document.getElementById('hljs-style').href = `https://cdn.jsdelivr.net/npm/highlight.js@11/styles/${hljsName}.min.css`;
+            });
+
+            // 搜索回车跳转
+            document.getElementById('search-input').addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    const rawVal = e.target.value.trim();
+                    if (!rawVal) return;
+                    window.location.hash = '/' + parseInputText(rawVal);
+                }
+            });
+
+            // 设置弹窗
+            const modal = document.getElementById('settings-modal');
+            document.getElementById('settings-btn').addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('token-input').value = storage.get('github_token') || '';
+                document.getElementById('translate-api-key').value = storage.get('translate_api_key') || '';
+            });
+
+            document.getElementById('close-settings').addEventListener('click', () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+
+            document.getElementById('save-settings').addEventListener('click', () => {
+                storage.set('github_token', document.getElementById('token-input').value.trim());
+                storage.set('translate_api_key', document.getElementById('translate-api-key').value.trim());
+                cache.clear();
+                dirCache.clear();
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                handleRoute();
+            });
+
+            modal.addEventListener('click', e => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+
+            window.addEventListener('hashchange', handleRoute);
+        };
+
+        // ========== 页面初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = storage.get('theme') || 'ayu-dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-select').value = savedTheme;
+            const hljsName = HLJS_THEME_MAP[savedTheme] || 'atom-one-dark';
+            document.getElementById('hljs-style').href = `https://cdn.jsdelivr.net/npm/highlight.js@11/styles/${hljsName}.min.css`;
+
+            initEvents();
+            handleRoute();
+        });
+    </script>
+</body>
+</html>
