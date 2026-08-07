@@ -8,7 +8,7 @@ window.GLOBAL_CONFIG = {
 
     // ----- 翻译 API 配置（Agenes-AI 兼容 OpenAI 接口）-----
     // API 地址末尾不要带斜杠，若为 OpenAI 兼容接口，请改成 /v1/chat/completions 形式
-    TRANSLATE_API_BASE: 'https://apihug.agnes-ai.com/v1',
+    TRANSLATE_API_BASE: 'https://apihub.agnes-ai.com/v1/chat/completions',
     // 使用的模型名称
     TRANSLATE_MODEL: 'agnes-2.0-flash',
     // API 密钥（留空则每次需手动输入，仅在本地浏览器中保存）
@@ -109,104 +109,98 @@ window.GLOBAL_CONFIG = {
         .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
         /* ========== 主布局结构 ========== */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        .main-layout {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
         .panel-left, .panel-right {
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-2);
-            border-right: 1px solid var(--border);
-            overflow: hidden;
-            transition: width 0.2s ease;
+            flex-shrink: 0; display: flex; flex-direction: column;
+            background: var(--bg-2); border-right: 1px solid var(--border);
+            overflow: hidden; transition: width 0.2s ease;
         }
         .panel-right { border-right: none; border-left: 1px solid var(--border); }
         .panel-left.collapsed, .panel-right.collapsed { width: 0 !important; border: none; }
         .panel-header {
-            padding: 8px 12px;
+            padding: 0 12px; height: 36px; flex-shrink: 0;
             border-bottom: 1px solid var(--border);
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-            flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .panel-content {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        .panel-center {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 24px;
-        }
+        .panel-content { flex: 1; overflow-y: auto; overflow-x: hidden; }
+        .panel-center { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 24px; }
         .panel-toggle-btn {
-            cursor: pointer;
-            color: var(--text-muted);
-            padding: 2px 6px;
-            border-radius: 4px;
+            cursor: pointer; color: var(--text-muted); padding: 4px;
+            font-size: 14px; line-height: 1; display: flex;
+            align-items: center; justify-content: center; border-radius: 4px;
         }
         .panel-toggle-btn:hover { color: var(--primary); background: var(--bg-3); }
 
+        /* ========== 右栏 Tab 切换 ========== */
+        .tabs { display: flex; gap: 4px; height: 100%; align-items: center; }
+        .tab {
+            padding: 4px 8px; font-size: 12px; cursor: pointer;
+            color: var(--text-muted); border-bottom: 2px solid transparent;
+            transition: color 0.2s; user-select: none; height: 100%;
+            display: flex; align-items: center;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; height: 100%; }
+        .tab-content.active { display: block; }
+
         /* ========== 文件树样式 ========== */
-        .file-tree { padding: 4px 0; font-size: 13px; }
+        .file-tree { padding: 8px 0; font-size: 13px; }
         .tree-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 12px;
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-secondary);
+            display: flex; align-items: center; gap: 6px;
+            padding: 3px 12px; cursor: pointer; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary);
         }
         .tree-item:hover { background: var(--bg-3); color: var(--text); }
         .tree-item.active { background: var(--bg-3); color: var(--primary); }
-        .tree-item.dir { font-weight: 500; }
+        .tree-item.dir { font-weight: 500; color: var(--text); }
+        
         .tree-arrow {
-            width: 12px;
-            text-align: center;
-            font-size: 10px;
-            color: var(--text-muted);
-            transition: transform 0.15s ease;
-            flex-shrink: 0;
+            width: 12px; text-align: center; font-size: 10px;
+            color: var(--text-muted); transition: transform 0.15s ease;
+            flex-shrink: 0; display: flex; justify-content: center;
         }
         .tree-item.expanded .tree-arrow { transform: rotate(90deg); }
         .tree-children { display: none; }
         .tree-item.expanded + .tree-children { display: block; }
-        .tree-children .tree-item { padding-left: 28px; }
-        .tree-children .tree-children .tree-item { padding-left: 44px; }
-        .tree-icon { flex-shrink: 0; font-size: 14px; }
+        .tree-icon { flex-shrink: 0; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+
+        /* ========== 大纲样式 ========== */
+        .outline-item {
+            display: block; padding: 4px 12px; cursor: pointer;
+            color: var(--text-secondary); font-size: 13px;
+            border-left: 2px solid transparent; transition: all 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .outline-item:hover { color: var(--text); background: var(--bg-3); }
+        .outline-item.active { color: var(--primary); border-left-color: var(--primary); background: var(--bg-3); }
+        .outline-item.level-1 { padding-left: 12px; font-weight: 500; }
+        .outline-item.level-2 { padding-left: 24px; }
+        .outline-item.level-3 { padding-left: 36px; }
+        .outline-item.level-4 { padding-left: 48px; }
+
+        /* ========== 图片预览样式 ========== */
+        .image-viewer-container {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 400px;
+            background-color: var(--bg-3); border-radius: 8px;
+            padding: 20px; position: relative;
+        }
+        .image-viewer-container img {
+            max-width: 100%; max-height: 75vh; object-fit: contain;
+            border-radius: 4px; background: var(--bg-2);
+        }
 
         /* ========== Markdown 样式 ========== */
-        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--text); font-weight: 600; margin: 1.2em 0 0.5em; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--text); font-weight: 600; margin: 1.2em 0 0.5em; scroll-margin-top: 20px; }
         .markdown-body h1 { font-size: 1.8em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
         .markdown-body h2 { font-size: 1.4em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
         .markdown-body p { margin: 1em 0; color: var(--text-secondary); line-height: 1.7; }
         .markdown-body code { background: var(--bg-3); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
         .markdown-body pre {
-            background: var(--bg-3) !important;
-            padding: 1em;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 1em 0;
-            border: 1px solid var(--border);
-            position: relative;
+            background: var(--bg-3) !important; padding: 1em; border-radius: 6px;
+            overflow-x: auto; margin: 1em 0; border: 1px solid var(--border); position: relative;
         }
         .markdown-body pre code { background: transparent; padding: 0; }
         .markdown-body ul, .markdown-body ol { padding-left: 2em; color: var(--text-secondary); margin: 1em 0; }
@@ -220,40 +214,21 @@ window.GLOBAL_CONFIG = {
 
         /* 代码复制按钮 */
         .code-copy-btn {
-            position: absolute;
-            top: 8px; right: 8px; z-index: 10;
-            background: var(--bg-2);
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+            position: absolute; top: 8px; right: 8px; z-index: 10;
+            background: var(--bg-2); border: 1px solid var(--border); color: var(--text-secondary);
+            padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;
+            opacity: 0; transition: opacity 0.2s, border-color 0.2s, color 0.2s;
         }
         pre:hover .code-copy-btn { opacity: 1; }
         .code-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
         .code-copy-btn.copied { color: var(--accent); border-color: var(--accent); }
 
         /* 右上角操作按钮组 */
-        .action-bar {
-            position: absolute;
-            top: 12px; right: 12px; z-index: 99;
-            display: flex; gap: 8px;
-        }
+        .action-bar { position: absolute; top: 12px; right: 12px; z-index: 99; display: flex; gap: 8px; }
         .action-btn {
-            background: var(--bg-3);
-            border: 1px solid var(--border);
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            color: var(--primary);
-            white-space: nowrap;
-            cursor: pointer;
-            transition: border-color 0.2s;
-            text-decoration: none;
-            display: inline-block;
+            background: var(--bg-3); border: 1px solid var(--border); padding: 4px 12px;
+            border-radius: 6px; font-size: 14px; color: var(--primary); white-space: nowrap;
+            cursor: pointer; transition: border-color 0.2s; text-decoration: none; display: inline-block;
         }
         .action-btn:hover { border-color: var(--primary); }
         .action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -265,60 +240,24 @@ window.GLOBAL_CONFIG = {
         .prop-row .label { color: var(--text-muted); }
         .lang-bar { height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; margin: 6px 0; }
         .lang-bar-fill { height: 100%; background: var(--primary); }
-        .release-item {
-            display: block;
-            padding: 6px 8px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
+        .release-item { display: block; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
         .release-item:hover { background: var(--bg-3); color: var(--primary); }
         .release-tag { font-weight: 500; }
         .release-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-        /* ===== 拖拽分隔条（新增） ===== */
-        .resizer {
-            flex-shrink: 0;
-            width: 5px;
-            cursor: col-resize;
-            background: transparent;
-            position: relative;
-            z-index: 5;
-            transition: background 0.15s ease;
-        }
-        .resizer::after {
-            content: '';
-            position: absolute;
-            inset: 0 1px;
-            border-radius: 2px;
-            background: transparent;
-            transition: background 0.15s ease;
-        }
+        /* ===== 拖拽分隔条 ===== */
+        .resizer { flex-shrink: 0; width: 5px; cursor: col-resize; background: transparent; position: relative; z-index: 5; transition: background 0.15s ease; }
+        .resizer::after { content: ''; position: absolute; inset: 0 1px; border-radius: 2px; background: transparent; transition: background 0.15s ease; }
         .resizer:hover::after { background: var(--border); }
-        .resizer.dragging,
-        .resizer.dragging::after { background: var(--primary) !important; }
-        .panel-left.dragging,
-        .panel-right.dragging { transition: none !important; }
+        .resizer.dragging, .resizer.dragging::after { background: var(--primary) !important; }
+        .panel-left.dragging, .panel-right.dragging { transition: none !important; }
 
-        /* ===== 折叠后的展开按钮（新增） ===== */
+        /* ===== 折叠后的展开按钮 ===== */
         .panel-expand-btn {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 40px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-2);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            cursor: pointer;
-            z-index: 40;
-            font-size: 11px;
-            line-height: 1;
-            border-radius: 0 6px 6px 0;
+            position: fixed; top: 50%; transform: translateY(-50%);
+            width: 18px; height: 40px; display: none; align-items: center; justify-content: center;
+            background: var(--bg-2); border: 1px solid var(--border); color: var(--text-muted);
+            cursor: pointer; z-index: 40; font-size: 12px; line-height: 1; border-radius: 0 6px 6px 0;
             transition: color 0.15s, background 0.15s;
         }
         .panel-expand-btn.right { border-radius: 6px 0 0 6px; }
@@ -358,17 +297,15 @@ window.GLOBAL_CONFIG = {
             <!-- 左侧：文件树 -->
             <aside id="panel-left" class="panel-left" style="width: 280px;">
                 <div class="panel-header">
-                    <span>资源管理器</span>
-                    <span class="panel-toggle-btn" onclick="togglePanel('left')">◀</span>
+                    <span class="text-xs font-semibold uppercase text-text-2">资源管理器</span>
+                    <span class="panel-toggle-btn" onclick="togglePanel('left')">❮</span>
                 </div>
                 <div id="file-tree" class="panel-content file-tree">
                     <div class="p-3 text-text-3 text-sm">请先打开一个仓库</div>
                 </div>
             </aside>
 
-            <!-- 拖拽分隔条：左（新增） -->
-            <div id="resizer-left" class="resizer"
-                 data-target="panel-left" data-side="left"></div>
+            <div id="resizer-left" class="resizer" data-target="panel-left" data-side="left"></div>
 
             <!-- 中间：内容区 -->
             <section id="panel-center" class="panel-center scrollbar-thin">
@@ -381,32 +318,36 @@ window.GLOBAL_CONFIG = {
                 </div>
             </section>
 
-            <!-- 拖拽分隔条：右（新增） -->
-            <div id="resizer-right" class="resizer"
-                 data-target="panel-right" data-side="right"></div>
+            <div id="resizer-right" class="resizer" data-target="panel-right" data-side="right"></div>
 
-            <!-- 右侧：属性面板 -->
+            <!-- 右侧：大纲 / 属性面板 -->
             <aside id="panel-right" class="panel-right" style="width: 300px;">
                 <div class="panel-header">
-                    <span>属性</span>
-                    <span class="panel-toggle-btn" onclick="togglePanel('right')">▶</span>
+                    <div class="tabs">
+                        <div class="tab active" data-tab="outline" onclick="switchTab('outline')">大纲</div>
+                        <div class="tab" data-tab="prop" onclick="switchTab('prop')">属性</div>
+                    </div>
+                    <span class="panel-toggle-btn" onclick="togglePanel('right')">❯</span>
                 </div>
-                <div id="prop-panel" class="panel-content">
-                    <div class="p-3 text-text-3 text-sm">暂无仓库信息</div>
+                <div class="panel-content">
+                    <div id="view-outline" class="tab-content active">
+                        <div class="p-3 text-text-3 text-sm">暂无大纲</div>
+                    </div>
+                    <div id="view-prop" class="tab-content">
+                        <div class="p-3 text-text-3 text-sm">暂无仓库信息</div>
+                    </div>
                 </div>
             </aside>
         </div>
     </div>
 
-    <!-- 折叠态展开按钮（新增） -->
-    <div id="expand-left"  class="panel-expand-btn"      data-side="left">▶</div>
-    <div id="expand-right" class="panel-expand-btn right" data-side="right">◀</div>
+    <div id="expand-left"  class="panel-expand-btn"      data-side="left">❯</div>
+    <div id="expand-right" class="panel-expand-btn right" data-side="right">❮</div>
 
     <!-- 设置弹窗 -->
     <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
         <div class="bg-bg-2 border border-border rounded-lg w-full max-w-md p-5 mx-4">
             <h3 class="text-lg font-bold mb-4">设置</h3>
-            
             <label class="block text-sm text-text-2 mb-2">GitHub Personal Access Token</label>
             <input id="token-input" type="password" placeholder="ghp_xxxxxxxxxxxx" 
                 class="w-full bg-bg-3 border border-border rounded-md px-3 py-2 text-sm text-text placeholder-text-3 focus:outline-none focus:border-primary mb-2">
@@ -433,15 +374,15 @@ window.GLOBAL_CONFIG = {
         const API_BASE = CONFIG.GITHUB_API_BASE;
         const DOWNLOAD_PROXY = CONFIG.DOWNLOAD_PROXY;
         const cache = new Map();
-        const dirCache = new Map(); // 目录缓存
+        const dirCache = new Map();
 
         let currentRepo = { owner: '', repo: '', branch: CONFIG.DEFAULT_BRANCH, path: '' };
         let globalRawMd = "";
         let globalTranslatedMd = "";
         let isTranslated = false;
         let isTranslating = false;
+        let outlineObserver = null;
 
-        // 主题映射
         const HLJS_THEME_MAP = {
             'ayu-dark': 'atom-one-dark', 'catppuccin-mocha': 'atom-one-dark',
             'github-dark': 'github-dark', 'dracula': 'dracula',
@@ -450,7 +391,6 @@ window.GLOBAL_CONFIG = {
             'catppuccin-latte': 'atom-one-light', 'github-light': 'github',
         };
 
-        // ========== 本地存储 ==========
         const storage = {
             get: key => { try { return JSON.parse(localStorage.getItem('ghr_' + key)) } catch { return null } },
             set: (key, val) => localStorage.setItem('ghr_' + key, JSON.stringify(val))
@@ -482,291 +422,181 @@ window.GLOBAL_CONFIG = {
             });
         }
 
-        // ========== 图片代理 ==========
         function proxyImages(container, owner, repo, branch, currentPath) {
             if (!CONFIG.ENABLE_IMAGE_PROXY) return;
             const imgs = container.querySelectorAll('img');
             const baseRawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}`;
-
             imgs.forEach(img => {
                 const src = img.getAttribute('src') || '';
                 if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
-
                 let rawUrl;
                 if (src.startsWith('http')) {
-                    if (src.includes('raw.githubusercontent.com')) {
-                        rawUrl = src;
-                    } else {
-                        return;
-                    }
+                    if (src.includes('raw.githubusercontent.com')) rawUrl = src;
+                    else return;
                 } else {
                     const dirPath = currentPath.includes('/') ? currentPath.substring(0, currentPath.lastIndexOf('/')) : '';
                     const fullPath = dirPath ? `${dirPath}/${src}` : src;
                     rawUrl = `${baseRawUrl}/${fullPath}`;
                 }
-
                 const proxiedUrl = DOWNLOAD_PROXY + rawUrl;
                 img.setAttribute('data-original-src', rawUrl);
                 img.src = proxiedUrl;
-
-                img.onerror = function() {
-                    if (this.src !== rawUrl) {
-                        this.src = rawUrl;
-                        this.onerror = null;
-                    }
-                };
+                img.onerror = function() { if (this.src !== rawUrl) { this.src = rawUrl; this.onerror = null; } };
             });
         }
 
-        // ========== GitHub 请求 ==========
         const request = async (path) => {
             if (cache.has(path)) return cache.get(path);
             const token = storage.get('github_token');
             const headers = { Accept: 'application/vnd.github.v3+json' };
             if (token) headers.Authorization = 'token ' + token;
-
             const res = await fetch(API_BASE + path, { headers });
-            if (res.status === 403 && res.headers.get('X-RateLimit-Remaining') === '0') {
-                throw new Error('API 请求频率超限，请在设置中添加 PAT');
-            }
+            if (res.status === 403 && res.headers.get('X-RateLimit-Remaining') === '0') throw new Error('API 请求频率超限，请在设置中添加 PAT');
             if (!res.ok) throw new Error('请求失败：' + res.status + ' ' + res.statusText);
-            
             const data = await res.json();
             cache.set(path, data);
             return data;
         };
 
-        const decodeBase64 = str => {
-            try { return decodeURIComponent(escape(window.atob(str))) }
-            catch { return window.atob(str) }
-        };
-
-        const escapeHtml = str => {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        };
-
-        function parseInputText(inputText) {
-            let text = inputText.trim();
-            text = text.replace(/^https?:\/\//, '').replace(/^github\.com\//, '');
-            return text;
-        }
-
-        function isMarkdownFile(filename) {
-            return filename.toLowerCase().endsWith('.md') || filename.toLowerCase().endsWith('.markdown');
+        const decodeBase64 = str => { try { return decodeURIComponent(escape(window.atob(str))) } catch { return window.atob(str) } };
+        const escapeHtml = str => { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; };
+        function parseInputText(inputText) { return inputText.trim().replace(/^https?:\/\//, '').replace(/^github\.com\//, ''); }
+        function isMarkdownFile(filename) { return filename.toLowerCase().endsWith('.md') || filename.toLowerCase().endsWith('.markdown'); }
+        function isImageFile(filename) {
+            const exts = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp', '.ico'];
+            return exts.some(ext => filename.toLowerCase().endsWith(ext));
         }
 
         // ========== 翻译功能 ==========
         async function translateMarkdown(mdText) {
             const apiKey = storage.get('translate_api_key') || CONFIG.TRANSLATE_API_KEY;
             if (!apiKey) throw new Error('缺少翻译 API 密钥，请在设置中添加后重试');
-
             const apiBase = CONFIG.TRANSLATE_API_BASE.replace(/\/$/, '');
             const url = `${apiBase}/chat/completions`;
-
-            const prompt = `请将以下 Markdown 文档翻译成中文。保持原有格式不变，不要添加任何注释或解释，直接输出翻译后的 Markdown 文档。
-注意：
-1. 代码块内容不要翻译
-2. URL、邮箱、命令行参数保持原样
-3. 专有名词首次出现可以括号标注英文
-4. 保持原有 Markdown 结构，包括标题、列表、表格、引用等
-5. 不要修改文档中的 Markdown 语法
-
-待翻译内容：
- ${mdText}`;
-
+            const prompt = `请将以下 Markdown 文档翻译成中文。保持原有格式不变，不要添加任何注释或解释，直接输出翻译后的 Markdown 文档。\n注意：\n1. 代码块内容不要翻译\n2. URL、邮箱、命令行参数保持原样\n3. 专有名词首次出现可以括号标注英文\n4. 保持原有 Markdown 结构\n5. 不要修改文档中的 Markdown 语法\n\n待翻译内容：\n${mdText}`;
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                 body: JSON.stringify({ model: CONFIG.TRANSLATE_MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.3 })
             });
-
-            if (!res.ok) {
-                let errMsg = res.statusText;
-                try { const err = await res.json(); errMsg = err.error?.message || errMsg; } catch {}
-                throw new Error(`翻译失败 (${res.status})：${errMsg}`);
-            }
-
+            if (!res.ok) { let errMsg = res.statusText; try { const err = await res.json(); errMsg = err.error?.message || errMsg; } catch {} throw new Error(`翻译失败 (${res.status})：${errMsg}`); }
             const data = await res.json();
             return data.choices[0].message.content.trim();
         }
 
         function bindTranslateButton(rawMdText) {
-            globalRawMd = rawMdText;
-            globalTranslatedMd = "";
-            isTranslated = false;
-            
+            globalRawMd = rawMdText; globalTranslatedMd = ""; isTranslated = false;
             const transBtn = document.getElementById("trigger-translate");
             const mdBox = document.getElementById("md-container");
             if (!transBtn || !mdBox) return;
-
-            transBtn.disabled = false;
-            transBtn.innerText = "🌐 翻译/原文";
-
+            transBtn.disabled = false; transBtn.innerText = "🌐 翻译/原文";
             transBtn.onclick = async () => {
                 if (isTranslating) return;
-
                 if (isTranslated) {
                     mdBox.innerHTML = marked.parse(globalRawMd);
-                    transBtn.innerText = "🌐 翻译/原文";
-                    isTranslated = false;
+                    transBtn.innerText = "🌐 翻译/原文"; isTranslated = false;
                     mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
-                    bindCodeCopyButtons(mdBox);
-                    proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
-                    return;
+                    bindCodeCopyButtons(mdBox); proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                    generateOutline(); return;
                 }
-
                 if (globalTranslatedMd) {
                     mdBox.innerHTML = marked.parse(globalTranslatedMd);
-                    transBtn.innerText = "↩ 查看原文";
-                    isTranslated = true;
+                    transBtn.innerText = "↩ 查看原文"; isTranslated = true;
                     mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
-                    bindCodeCopyButtons(mdBox);
-                    proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
-                    return;
+                    bindCodeCopyButtons(mdBox); proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                    generateOutline(); return;
                 }
-
-                isTranslating = true;
-                transBtn.disabled = true;
-                transBtn.innerText = "翻译中...";
-
+                isTranslating = true; transBtn.disabled = true; transBtn.innerText = "翻译中...";
                 try {
                     globalTranslatedMd = await translateMarkdown(globalRawMd);
                     mdBox.innerHTML = marked.parse(globalTranslatedMd);
-                    transBtn.innerText = "↩ 查看原文";
-                    isTranslated = true;
+                    transBtn.innerText = "↩ 查看原文"; isTranslated = true;
                     mdBox.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
-                    bindCodeCopyButtons(mdBox);
-                    proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
-                } catch (e) {
-                    console.error("翻译出错：", e);
-                    alert(e.message);
-                    transBtn.innerText = "🌐 翻译/原文";
-                } finally {
-                    isTranslating = false;
-                    transBtn.disabled = false;
-                }
+                    bindCodeCopyButtons(mdBox); proxyImages(mdBox, currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                    generateOutline();
+                } catch (e) { console.error("翻译出错：", e); alert(e.message); transBtn.innerText = "🌐 翻译/原文"; }
+                finally { isTranslating = false; transBtn.disabled = false; }
             };
         }
 
-        // ========== 面板切换（已重写：含拖拽与展开按钮） ==========
-        const PANEL_MIN = 160;
-        const PANEL_MAX = 560;
-
+        // ========== 面板切换与拖拽 ============
+        const PANEL_MIN = 160; const PANEL_MAX = 560;
         function initResizer(resizer) {
             const panel = document.getElementById(resizer.dataset.target);
-            const side  = resizer.dataset.side;
-            let startX = 0, startWidth = 0;
-
+            const side  = resizer.dataset.side; let startX = 0, startWidth = 0;
             const onMove = (e) => {
-                const x = e.touches ? e.touches[0].clientX : e.clientX;
-                const dx = x - startX;
-                const w = Math.max(
-                    PANEL_MIN,
-                    Math.min(PANEL_MAX, side === 'left' ? startWidth + dx : startWidth - dx)
-                );
-                panel.style.width = w + 'px';
-                storage.set('panel_width_' + side, w);
+                const x = e.touches ? e.touches[0].clientX : e.clientX; const dx = x - startX;
+                const w = Math.max(PANEL_MIN, Math.min(PANEL_MAX, side === 'left' ? startWidth + dx : startWidth - dx));
+                panel.style.width = w + 'px'; storage.set('panel_width_' + side, w);
             };
-
-            const onUp = () => {
-                panel.classList.remove('dragging');
-                resizer.classList.remove('dragging');
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-                document.removeEventListener('touchmove', onMove);
-                document.removeEventListener('touchend', onUp);
-            };
-
+            const onUp = () => { panel.classList.remove('dragging'); resizer.classList.remove('dragging'); document.body.style.cursor = ''; document.body.style.userSelect = ''; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp); };
             const onDown = (e) => {
                 if (panel.classList.contains('collapsed')) return;
-                startX = e.touches ? e.touches[0].clientX : e.clientX;
-                startWidth = panel.offsetWidth;
-                panel.classList.add('dragging');
-                resizer.classList.add('dragging');
-                document.body.style.cursor = 'col-resize';
-                document.body.style.userSelect = 'none';
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
-                document.addEventListener('touchmove', onMove, { passive: false });
-                document.addEventListener('touchend', onUp);
+                startX = e.touches ? e.touches[0].clientX : e.clientX; startWidth = panel.offsetWidth;
+                panel.classList.add('dragging'); resizer.classList.add('dragging');
+                document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+                document.addEventListener('touchmove', onMove, { passive: false }); document.addEventListener('touchend', onUp);
                 e.preventDefault();
             };
-
-            resizer.addEventListener('mousedown',  onDown);
-            resizer.addEventListener('touchstart', onDown, { passive: false });
+            resizer.addEventListener('mousedown',  onDown); resizer.addEventListener('touchstart', onDown, { passive: false });
         }
-
-        function showExpandButton(side, show) {
-            const btn = document.getElementById('expand-' + side);
-            if (!btn) return;
-            btn.style.display = show ? 'flex' : 'none';
-            btn.style[side] = '0';
-        }
-
+        function showExpandButton(side, show) { const btn = document.getElementById('expand-' + side); if (!btn) return; btn.style.display = show ? 'flex' : 'none'; btn.style[side] = '0'; }
         function togglePanel(side) {
-            const panel   = document.getElementById('panel-' + side);
-            const resizer = document.getElementById('resizer-' + side);
+            const panel = document.getElementById('panel-' + side); const resizer = document.getElementById('resizer-' + side);
             const collapsed = panel.classList.toggle('collapsed');
-
             if (resizer) resizer.style.display = collapsed ? 'none' : 'block';
             showExpandButton(side, collapsed);
-
             const btn = panel.querySelector('.panel-toggle-btn');
-            if (btn) btn.textContent = collapsed
-                ? (side === 'left' ? '▶' : '◀')
-                : (side === 'left' ? '◀' : '▶');
-
+            if (btn) btn.textContent = collapsed ? (side === 'left' ? '❯' : '❮') : (side === 'left' ? '❮' : '❯');
             storage.set('panel_collapsed_' + side, collapsed);
         }
-
-        function expandPanel(side) {
-            const panel = document.getElementById('panel-' + side);
-            if (panel.classList.contains('collapsed')) togglePanel(side);
-        }
-
+        function expandPanel(side) { const panel = document.getElementById('panel-' + side); if (panel.classList.contains('collapsed')) togglePanel(side); }
         function initSidebar() {
             document.querySelectorAll('.resizer').forEach(initResizer);
-            document.querySelectorAll('.panel-expand-btn').forEach(btn =>
-                btn.addEventListener('click', () => expandPanel(btn.dataset.side))
-            );
-
+            document.querySelectorAll('.panel-expand-btn').forEach(btn => btn.addEventListener('click', () => expandPanel(btn.dataset.side)));
             ['left', 'right'].forEach(side => {
-                const panel = document.getElementById('panel-' + side);
-                const w = storage.get('panel_width_' + side);
+                const panel = document.getElementById('panel-' + side); const w = storage.get('panel_width_' + side);
                 if (w) panel.style.width = w + 'px';
-
                 if (storage.get('panel_collapsed_' + side)) {
-                    panel.classList.add('collapsed');
-                    const r = document.getElementById('resizer-' + side);
-                    if (r) r.style.display = 'none';
-                    showExpandButton(side, true);
-                    const btn = panel.querySelector('.panel-toggle-btn');
-                    if (btn) btn.textContent = side === 'left' ? '▶' : '◀';
+                    panel.classList.add('collapsed'); const r = document.getElementById('resizer-' + side);
+                    if (r) r.style.display = 'none'; showExpandButton(side, true);
+                    const btn = panel.querySelector('.panel-toggle-btn'); if (btn) btn.textContent = side === 'left' ? '❯' : '❮';
                 }
             });
         }
 
-        // ========== 文件树（VS Code 风格三栏布局） ==========
+        // ========== 右栏 Tab 切换 ==========
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => {
+                if (t.dataset.tab === 'outline' && name !== 'outline') {
+                    t.style.display = 'none'; // 非 MD 时隐藏大纲 Tab
+                } else {
+                    t.style.display = 'flex';
+                }
+                t.classList.toggle('active', t.dataset.tab === name);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `view-${name}`));
+        }
+
+        // ========== 文件树（纯缩进 + SVG 图标 + 自动收起） ==========
+        function getFileIcon(name, isDir) {
+            const ext = name.split('.').pop().toLowerCase();
+            const color = 'currentColor';
+            if (isDir) return `<svg viewBox="0 0 16 16" width="16" height="16" fill="${color}" style="color: var(--primary);"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5L5.5 1H1.75z"></path></svg>`;
+            if (ext === 'md') return `<svg viewBox="0 0 16 16" width="16" height="16" fill="${color}" style="color: var(--accent);"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.693a.75.75 0 0 1 .624.334l2.312 3.516H15.25a.75.75 0 0 1 .75.75v8.5a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1-.75-.75V1.75zm1.5.75v11.5h13V6.85H7.5a.75.75 0 0 1-.624-.334L4.564 3H1.5z"></path><path d="M3.5 8.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v3a.5.5 0 0 0 1 0v-3zm1.5-.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v3a.5.5 0 0 0 1 0v-3zm1.5-.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5z"></path></svg>`;
+            if (isImageFile(name)) return `<svg viewBox="0 0 16 16" width="16" height="16" fill="${color}" style="color: var(--accent);"><path d="M0 1.75A.75.75 0 0 1 .75 1h14.5a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1-.75-.75V1.75zm1.5.75v11h13V2.5h-13z"></path><path d="M5.5 6.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"></path><path d="M3.5 13l3-3 2 2 3-3 2.5 2.5v1.5h-11z"></path></svg>`;
+            return `<svg viewBox="0 0 16 16" width="16" height="16" fill="${color}" style="color: var(--text-muted);"><path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.46 0 .903.184 1.229.51l2.415 2.415c.326.326.51.77.51 1.229v10.096A1.75 1.75 0 0 1 12.75 16h-9A1.75 1.75 0 0 1 2 14.25V1.75zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25V4.154H9.75A.75.75 0 0 1 9 3.404V1.5H3.75z"></path></svg>`;
+        }
+
         async function loadFileTree(owner, repo, path = '') {
             const cacheKey = `${owner}/${repo}/${path}`;
             if (dirCache.has(cacheKey)) return dirCache.get(cacheKey);
-
             try {
                 const data = await request(`/repos/${owner}/${repo}/contents/${path}`);
-                data.sort((a, b) => {
-                    if (a.type === b.type) return a.name.localeCompare(b.name);
-                    return a.type === 'dir' ? -1 : 1;
-                });
-                dirCache.set(cacheKey, data);
-                return data;
-            } catch (e) {
-                console.error('加载目录失败：', e);
-                return [];
-            }
+                data.sort((a, b) => { if (a.type === b.type) return a.name.localeCompare(b.name); return a.type === 'dir' ? -1 : 1; });
+                dirCache.set(cacheKey, data); return data;
+            } catch (e) { console.error('加载目录失败：', e); return []; }
         }
 
         function renderFileTree(items, parentPath = '', level = 0) {
@@ -775,22 +605,12 @@ window.GLOBAL_CONFIG = {
                 const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
                 const isDir = item.type === 'dir';
                 const isActive = fullPath === currentRepo.path;
-
+                const padding = 12 + level * 16;
+                const icon = getFileIcon(item.name, isDir);
                 if (isDir) {
-                    html += `
-                    <div class="tree-item dir" data-path="${fullPath}" onclick="toggleDir(this, '${fullPath}')">
-                        <span class="tree-arrow">▶</span>
-                        <span class="tree-icon">📁</span>
-                        <span>${item.name}</span>
-                    </div>
-                    <div class="tree-children" data-path="${fullPath}"></div>`;
+                    html += `<div class="tree-item dir" style="padding-left: ${padding}px;" data-path="${fullPath}" onclick="toggleDir(this, '${fullPath}')"><span class="tree-arrow">❯</span><span class="tree-icon">${icon}</span><span>${item.name}</span></div><div class="tree-children" data-path="${fullPath}"></div>`;
                 } else {
-                    html += `
-                    <div class="tree-item file ${isActive ? 'active' : ''}" data-path="${fullPath}" onclick="openFile('${fullPath}')">
-                        <span class="tree-arrow"></span>
-                        <span class="tree-icon">📄</span>
-                        <span>${item.name}</span>
-                    </div>`;
+                    html += `<div class="tree-item file ${isActive ? 'active' : ''}" style="padding-left: ${padding}px;" data-path="${fullPath}" onclick="openFile('${fullPath}')"><span class="tree-arrow"></span><span class="tree-icon">${icon}</span><span>${item.name}</span></div>`;
                 }
             });
             return html;
@@ -799,68 +619,96 @@ window.GLOBAL_CONFIG = {
         async function toggleDir(el, path) {
             const isExpanded = el.classList.contains('expanded');
             const childrenEl = el.nextElementSibling;
-
-            if (isExpanded) {
-                el.classList.remove('expanded');
-                return;
+            if (isExpanded) { el.classList.remove('expanded'); return; }
+            
+            // 自动收起同级其他目录
+            const parentChildrenContainer = el.parentElement;
+            if (parentChildrenContainer.classList.contains('tree-children')) {
+                parentChildrenContainer.querySelectorAll(':scope > .tree-item.dir.expanded').forEach(sibling => {
+                    if (sibling !== el) sibling.classList.remove('expanded');
+                });
             }
 
             el.classList.add('expanded');
             if (childrenEl.innerHTML.trim()) return;
-
             const items = await loadFileTree(currentRepo.owner, currentRepo.repo, path);
-            childrenEl.innerHTML = renderFileTree(items, path, 1);
+            const level = (el.style.paddingLeft.replace('px', '') - 12) / 16 + 1;
+            childrenEl.innerHTML = renderFileTree(items, path, level);
         }
 
         async function initFileTree(owner, repo) {
-            currentRepo.owner = owner;
-            currentRepo.repo = repo;
+            currentRepo.owner = owner; currentRepo.repo = repo;
             const items = await loadFileTree(owner, repo, '');
-            document.getElementById('file-tree').innerHTML = renderFileTree(items, '');
+            document.getElementById('file-tree').innerHTML = renderFileTree(items, '', 0);
         }
 
         async function openFile(path) {
             currentRepo.path = path;
-            document.querySelectorAll('#file-tree .tree-item.file').forEach(el => {
-                el.classList.toggle('active', el.dataset.path === path);
-            });
-
+            document.querySelectorAll('#file-tree .tree-item.file').forEach(el => el.classList.toggle('active', el.dataset.path === path));
             try {
                 const data = await request(`/repos/${currentRepo.owner}/${currentRepo.repo}/contents/${path}`);
                 renderFileContent(data);
             } catch (e) {
-                document.getElementById('main-content').innerHTML = `
-                    <div class="text-center py-20">
-                        <div class="text-red-400 mb-2">加载失败</div>
-                        <div class="text-text-3">${e.message}</div>
-                    </div>`;
+                document.getElementById('main-content').innerHTML = `<div class="text-center py-20"><div class="text-red-400 mb-2">加载失败</div><div class="text-text-3">${e.message}</div></div>`;
             }
+        }
+
+        // ========== 大纲提取与高亮 ==========
+        function generateOutline() {
+            const mdBox = document.getElementById('md-container');
+            const outlineBox = document.getElementById('view-outline');
+            if (!mdBox || !outlineBox) return;
+
+            const headers = mdBox.querySelectorAll('h1, h2, h3, h4');
+            if (headers.length === 0) {
+                outlineBox.innerHTML = '<div class="p-3 text-text-3 text-sm">暂无大纲</div>';
+                switchTab('prop');
+                return;
+            }
+
+            let html = '';
+            headers.forEach((h, i) => {
+                const level = h.tagName.toLowerCase();
+                const text = h.textContent;
+                const id = `outline-header-${i}`;
+                h.id = id;
+                html += `<div class="outline-item level-${level.replace('h', '')}" data-target="${id}">${text}</div>`;
+            });
+            outlineBox.innerHTML = html;
+            switchTab('outline');
+
+            // 绑定点击滚动
+            outlineBox.querySelectorAll('.outline-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const target = document.getElementById(item.dataset.target);
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            // 滚动高亮
+            if (outlineObserver) outlineObserver.disconnect();
+            outlineObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.id;
+                        outlineBox.querySelectorAll('.outline-item').forEach(item => {
+                            item.classList.toggle('active', item.dataset.target === id);
+                        });
+                    }
+                });
+            }, { rootMargin: '0px 0px -80% 0px' });
+
+            headers.forEach(h => outlineObserver.observe(h));
         }
 
         // ========== 属性面板 ==========
         function renderPropPanel(repoInfo, langData, releases) {
             const langTotal = Object.values(langData).reduce((a,b)=>a+b, 0);
-            const langList = Object.entries(langData)
-                .map(([name, size]) => ({ name, percent: ((size / langTotal) * 100).toFixed(1) }))
-                .sort((a, b) => b.percent - a.percent);
-
+            const langList = Object.entries(langData).map(([name, size]) => ({ name, percent: ((size / langTotal) * 100).toFixed(1) })).sort((a, b) => b.percent - a.percent);
             const topLang = langList.slice(0, 5);
-            const langBars = topLang.map(l => `
-                <div class="prop-row">
-                    <span class="label">${l.name}</span>
-                    <span>${l.percent}%</span>
-                </div>
-                <div class="lang-bar"><div class="lang-bar-fill" style="width: ${l.percent}%"></div></div>
-            `).join('');
-
-            const releaseHtml = releases.slice(0, 5).map(r => `
-                <div class="release-item" onclick="jumpToReleases()">
-                    <div class="release-tag">${r.tag_name}</div>
-                    <div class="release-date">${new Date(r.published_at).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-
-            document.getElementById('prop-panel').innerHTML = `
+            const langBars = topLang.map(l => `<div class="prop-row"><span class="label">${l.name}</span><span>${l.percent}%</span></div><div class="lang-bar"><div class="lang-bar-fill" style="width: ${l.percent}%"></div></div>`).join('');
+            const releaseHtml = releases.slice(0, 5).map(r => `<div class="release-item" onclick="jumpToReleases()"><div class="release-tag">${r.tag_name}</div><div class="release-date">${new Date(r.published_at).toLocaleDateString()}</div></div>`).join('');
+            document.getElementById('view-prop').innerHTML = `
                 <div class="prop-section">
                     <div class="prop-section-title">仓库信息</div>
                     <div class="prop-row"><span class="label">Stars</span><span>${repoInfo.stargazers_count.toLocaleString()}</span></div>
@@ -870,62 +718,54 @@ window.GLOBAL_CONFIG = {
                     <div class="prop-row"><span class="label">最近更新</span><span>${new Date(repoInfo.updated_at).toLocaleDateString()}</span></div>
                     <a href="${repoInfo.html_url}" target="_blank" class="block text-center mt-2 text-xs text-primary hover:underline">在 GitHub 中查看</a>
                 </div>
-
                 <div class="prop-section">
                     <div class="prop-section-title">语言构成</div>
                     ${langBars || '<div class="text-text-3 text-xs">无数据</div>'}
                 </div>
-
                 <div class="prop-section">
                     <div class="prop-section-title">最新发布</div>
                     ${releaseHtml || '<div class="text-text-3 text-xs">暂无发布</div>'}
-                </div>
-            `;
+                </div>`;
         }
-
-        function jumpToReleases() {
-            window.location.hash = `/${currentRepo.owner}/${currentRepo.repo}/releases`;
-        }
+        function jumpToReleases() { window.location.hash = `/${currentRepo.owner}/${currentRepo.repo}/releases`; }
 
         // ========== 文档内容 ==========
         function renderFileContent(fileData) {
             const rawContent = decodeBase64(fileData.content);
             const proxyUrl = DOWNLOAD_PROXY + fileData.download_url;
             const filename = fileData.name;
-
             let html = '';
+            
             if (isMarkdownFile(filename)) {
-                html = `
-                <div class="relative">
+                html = `<div class="relative">
                     <div class="action-bar">
                         <button class="action-btn" id="copy-file-btn">📋 复制</button>
                         <a href="${proxyUrl}" target="_blank" download="${filename}" class="action-btn">⬇ 下载</a>
                         <button class="action-btn" id="trigger-translate">🌐 翻译/原文</button>
                     </div>
-                    <div id="md-container" class="markdown-body bg-bg-2 border border-border rounded-lg p-6 pt-12">
-                        ${marked.parse(rawContent)}
+                    <div id="md-container" class="markdown-body bg-bg-2 border border-border rounded-lg p-6 pt-12">${marked.parse(rawContent)}</div>
+                </div>`;
+                document.getElementById('main-content').innerHTML = html;
+                bindTranslateButton(rawContent);
+                document.querySelectorAll('#md-container pre code').forEach(block => hljs.highlightElement(block));
+                bindCodeCopyButtons(document.getElementById('md-container'));
+                proxyImages(document.getElementById('md-container'), currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
+                document.getElementById('copy-file-btn').onclick = async () => { const ok = await copyToClipboard(rawContent); if (ok) { const btn = document.getElementById('copy-file-btn'); const orig = btn.innerText; btn.innerText = '✓ 已复制'; setTimeout(() => btn.innerText = orig, 1500); } };
+                generateOutline(); // 生成大纲并切到大纲 Tab
+            } else if (isImageFile(filename)) {
+                html = `<div class="relative">
+                    <div class="action-bar">
+                        <a href="${proxyUrl}" target="_blank" download="${filename}" class="action-btn">⬇ 下载</a>
+                    </div>
+                    <div class="image-viewer-container">
+                        <img src="${proxyUrl}" alt="${filename}" onerror="this.onerror=null; this.src='${fileData.download_url}'">
                     </div>
                 </div>`;
-
-                setTimeout(() => {
-                    bindTranslateButton(rawContent);
-                    document.querySelectorAll('#md-container pre code').forEach(block => hljs.highlightElement(block));
-                    bindCodeCopyButtons(document.getElementById('md-container'));
-                    proxyImages(document.getElementById('md-container'), currentRepo.owner, currentRepo.repo, currentRepo.branch, currentRepo.path);
-
-                    document.getElementById('copy-file-btn').onclick = async () => {
-                        const ok = await copyToClipboard(rawContent);
-                        if (ok) {
-                            const btn = document.getElementById('copy-file-btn');
-                            const orig = btn.innerText;
-                            btn.innerText = '✓ 已复制';
-                            setTimeout(() => btn.innerText = orig, 1500);
-                        }
-                    };
-                }, 0);
+                document.getElementById('main-content').innerHTML = html;
+                document.getElementById('view-outline').innerHTML = '<div class="p-3 text-text-3 text-sm">暂无大纲</div>';
+                switchTab('prop'); // 图片只显示属性
             } else {
-                html = `
-                <div class="flex justify-between items-center mb-2">
+                html = `<div class="flex justify-between items-center mb-2">
                     <span class="text-text-2 text-sm">${filename}</span>
                     <div class="flex gap-2">
                         <button class="action-btn text-sm" id="copy-file-btn">📋 复制</button>
@@ -933,154 +773,68 @@ window.GLOBAL_CONFIG = {
                     </div>
                 </div>
                 <pre style="position:relative;"><code class="language-${filename.split('.').pop()}">${escapeHtml(rawContent)}</code></pre>`;
-
-                setTimeout(() => {
-                    document.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
-                    bindCodeCopyButtons();
-                    document.getElementById('copy-file-btn').onclick = async () => {
-                        const ok = await copyToClipboard(rawContent);
-                        if (ok) {
-                            const btn = document.getElementById('copy-file-btn');
-                            const orig = btn.innerText;
-                            btn.innerText = '✓ 已复制';
-                            setTimeout(() => btn.innerText = orig, 1500);
-                        }
-                    };
-                }, 0);
+                document.getElementById('main-content').innerHTML = html;
+                document.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                bindCodeCopyButtons();
+                document.getElementById('copy-file-btn').onclick = async () => { const ok = await copyToClipboard(rawContent); if (ok) { const btn = document.getElementById('copy-file-btn'); const orig = btn.innerText; btn.innerText = '✓ 已复制'; setTimeout(() => btn.innerText = orig, 1500); } };
+                document.getElementById('view-outline').innerHTML = '<div class="p-3 text-text-3 text-sm">暂无大纲</div>';
+                switchTab('prop'); // 非 MD 文件切回属性
             }
-
-            document.getElementById('main-content').innerHTML = html;
         }
 
         const renderHome = () => {
             document.getElementById('file-tree').innerHTML = '<div class="p-3 text-text-3 text-sm">请先打开一个仓库</div>';
-            document.getElementById('prop-panel').innerHTML = '<div class="p-3 text-text-3 text-sm">暂无仓库信息</div>';
-            document.getElementById('main-content').innerHTML = `
-                <div class="text-center mt-20">
-                    <h2 class="text-2xl font-bold text-text mb-2">GitHub 阅读器</h2>
-                    <p class="text-text-2 mb-2">VS Code 风格三栏布局 · 支持图片加速 · AI 翻译</p>
-                    <p class="text-text-3 text-sm">在顶部输入框粘贴仓库地址开始浏览</p>
-                </div>`;
+            document.getElementById('view-prop').innerHTML = '<div class="p-3 text-text-3 text-sm">暂无仓库信息</div>';
+            document.getElementById('view-outline').innerHTML = '<div class="p-3 text-text-3 text-sm">暂无大纲</div>';
+            switchTab('prop');
+            document.getElementById('main-content').innerHTML = `<div class="text-center mt-20"><h2 class="text-2xl font-bold text-text mb-2">GitHub 阅读器</h2><p class="text-text-2 mb-2">VS Code 风格三栏布局 · 支持图片加速 · AI 翻译</p><p class="text-text-3 text-sm">在顶部输入框粘贴仓库地址开始浏览</p></div>`;
         };
 
         const renderRepo = async (owner, repo, path = '') => {
             currentRepo = { owner, repo, branch: CONFIG.DEFAULT_BRANCH, path: '' };
-
             const [repoInfo, langData, readme, releases] = await Promise.all([
-                request(`/repos/${owner}/${repo}`),
-                request(`/repos/${owner}/${repo}/languages`).catch(() => ({})),
-                request(`/repos/${owner}/${repo}/readme`).catch(() => null),
-                request(`/repos/${owner}/${repo}/releases?per_page=10`).catch(() => [])
+                request(`/repos/${owner}/${repo}`), request(`/repos/${owner}/${repo}/languages`).catch(() => ({})),
+                request(`/repos/${owner}/${repo}/readme`).catch(() => null), request(`/repos/${owner}/${repo}/releases?per_page=10`).catch(() => [])
             ]);
-
             initFileTree(owner, repo);
             renderPropPanel(repoInfo, langData, releases);
-
             if (readme) {
                 const rawContent = decodeBase64(readme.content);
                 currentRepo.path = 'README.md';
-
-                document.getElementById('main-content').innerHTML = `
-                <div class="relative">
+                document.getElementById('main-content').innerHTML = `<div class="relative">
                     <div class="action-bar">
                         <button class="action-btn" id="copy-file-btn">📋 复制</button>
                         <a href="${DOWNLOAD_PROXY + readme.download_url}" target="_blank" download="README.md" class="action-btn">⬇ 下载</a>
                         <button class="action-btn" id="trigger-translate">🌐 翻译/原文</button>
                     </div>
-                    <div id="md-container" class="markdown-body bg-bg-2 border border-border rounded-lg p-6 pt-12">
-                        ${marked.parse(rawContent)}
-                    </div>
+                    <div id="md-container" class="markdown-body bg-bg-2 border border-border rounded-lg p-6 pt-12">${marked.parse(rawContent)}</div>
                 </div>`;
-
-                setTimeout(() => {
-                    bindTranslateButton(rawContent);
-                    document.querySelectorAll('#md-container pre code').forEach(block => hljs.highlightElement(block));
-                    bindCodeCopyButtons(document.getElementById('md-container'));
-                    proxyImages(document.getElementById('md-container'), owner, repo, CONFIG.DEFAULT_BRANCH, 'README.md');
-
-                    document.getElementById('copy-file-btn').onclick = async () => {
-                        const ok = await copyToClipboard(rawContent);
-                        if (ok) {
-                            const btn = document.getElementById('copy-file-btn');
-                            const orig = btn.innerText;
-                            btn.innerText = '✓ 已复制';
-                            setTimeout(() => btn.innerText = orig, 1500);
-                        }
-                    };
-                }, 0);
+                bindTranslateButton(rawContent);
+                document.querySelectorAll('#md-container pre code').forEach(block => hljs.highlightElement(block));
+                bindCodeCopyButtons(document.getElementById('md-container'));
+                proxyImages(document.getElementById('md-container'), owner, repo, CONFIG.DEFAULT_BRANCH, 'README.md');
+                document.getElementById('copy-file-btn').onclick = async () => { const ok = await copyToClipboard(rawContent); if (ok) { const btn = document.getElementById('copy-file-btn'); const orig = btn.innerText; btn.innerText = '✓ 已复制'; setTimeout(() => btn.innerText = orig, 1500); } };
+                generateOutline();
             } else {
-                document.getElementById('main-content').innerHTML = `
-                    <div class="text-center py-20 text-text-3">
-                        该仓库没有 README 文件
-                    </div>`;
+                document.getElementById('main-content').innerHTML = `<div class="text-center py-20 text-text-3">该仓库没有 README 文件</div>`;
+                switchTab('prop');
             }
         };
 
         const renderReleases = async (owner, repo) => {
-            const [repoInfo, releases] = await Promise.all([
-                request(`/repos/${owner}/${repo}`),
-                request(`/repos/${owner}/${repo}/releases?per_page=20`)
-            ]);
-
+            const [repoInfo, releases] = await Promise.all([request(`/repos/${owner}/${repo}`), request(`/repos/${owner}/${repo}/releases?per_page=20`)]);
             currentRepo = { owner, repo, branch: CONFIG.DEFAULT_BRANCH, path: '' };
-            initFileTree(owner, repo);
-            renderPropPanel(repoInfo, {}, releases);
-
-            const releaseList = releases.length 
-                ? releases.map((r, i) => `
-                    <div id="release-${i}" class="bg-bg-2 border border-border rounded-lg mb-6 overflow-hidden">
-                        <div class="p-4 border-b border-border">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="text-lg font-bold text-primary">${r.name || r.tag_name}</h3>
-                                    <div class="text-text-3 text-xs mt-1">
-                                        标签：${r.tag_name} · 发布于 ${new Date(r.published_at).toLocaleDateString()}
-                                        ${r.prerelease ? ' · <span class="text-yellow-500">预发布</span>' : ''}
-                                    </div>
-                                </div>
-                                <a href="${r.html_url}" target="_blank" class="text-xs text-primary hover:underline">查看详情</a>
-                            </div>
-                        </div>
-                        ${r.body ? `<div class="p-4 border-b border-border markdown-body">${marked.parse(r.body)}</div>` : ''}
-                        ${r.assets?.length ? `
-                        <div class="p-4">
-                            <div class="text-sm font-medium text-text mb-3">下载资源（CDN代理）</div>
-                            <div class="grid gap-2">
-                                ${r.assets.map(asset => {
-                                    const fastUrl = DOWNLOAD_PROXY + asset.browser_download_url;
-                                    const fileMb = (asset.size / 1024 / 1024).toFixed(2);
-                                    return `
-                                    <a href="${fastUrl}" target="_blank" download="${asset.name}" 
-                                        class="flex justify-between items-center p-3 bg-bg-3 rounded-md hover:border-primary border border-transparent transition-colors">
-                                        <span class="text-sm text-text-2">📦 ${asset.name}</span>
-                                        <span class="text-xs text-text-3">${fileMb} MB</span>
-                                    </a>`;
-                                }).join('')}
-                            </div>
-                        </div>` : ''}
-                    </div>`).join('')
-                : '<div class="text-center text-text-3 py-20">该仓库没有发布版本</div>';
-
-            document.getElementById('main-content').innerHTML = `
-                <div class="mb-6">
-                    <h1 class="text-xl font-bold">${owner} / ${repo} · Releases</h1>
-                    <p class="text-text-2 text-sm mt-1">使用CDN加速下载发布资源</p>
-                </div>
-                ${releaseList}
-            `;
-
-            setTimeout(() => {
-                document.querySelectorAll('.markdown-body pre code').forEach(block => hljs.highlightElement(block));
-                bindCodeCopyButtons();
-            }, 0);
+            initFileTree(owner, repo); renderPropPanel(repoInfo, {}, releases);
+            const releaseList = releases.length ? releases.map((r, i) => `<div id="release-${i}" class="bg-bg-2 border border-border rounded-lg mb-6 overflow-hidden"><div class="p-4 border-b border-border"><div class="flex justify-between items-start"><div><h3 class="text-lg font-bold text-primary">${r.name || r.tag_name}</h3><div class="text-text-3 text-xs mt-1">标签：${r.tag_name} · 发布于 ${new Date(r.published_at).toLocaleDateString()}${r.prerelease ? ' · <span class="text-yellow-500">预发布</span>' : ''}</div></div><a href="${r.html_url}" target="_blank" class="text-xs text-primary hover:underline">查看详情</a></div></div>${r.body ? `<div class="p-4 border-b border-border markdown-body">${marked.parse(r.body)}</div>` : ''}${r.assets?.length ? `<div class="p-4"><div class="text-sm font-medium text-text mb-3">下载资源（CDN代理）</div><div class="grid gap-2">${r.assets.map(asset => { const fastUrl = DOWNLOAD_PROXY + asset.browser_download_url; const fileMb = (asset.size / 1024 / 1024).toFixed(2); return `<a href="${fastUrl}" target="_blank" download="${asset.name}" class="flex justify-between items-center p-3 bg-bg-3 rounded-md hover:border-primary border border-transparent transition-colors"><span class="text-sm text-text-2">📦 ${asset.name}</span><span class="text-xs text-text-3">${fileMb} MB</span></a>`; }).join('')}</div></div>` : ''}</div>`).join('') : '<div class="text-center text-text-3 py-20">该仓库没有发布版本</div>';
+            document.getElementById('main-content').innerHTML = `<div class="mb-6"><h1 class="text-xl font-bold">${owner} / ${repo} · Releases</h1><p class="text-text-2 text-sm mt-1">使用CDN加速下载发布资源</p></div>${releaseList}`;
+            setTimeout(() => { document.querySelectorAll('.markdown-body pre code').forEach(block => hljs.highlightElement(block)); bindCodeCopyButtons(); }, 0);
+            switchTab('prop');
         };
 
-        // ========== 路由处理 ==========
         const parseRoute = () => {
             const hash = window.location.hash.slice(1).split('/').filter(Boolean);
             if (hash.length === 0) return { type: 'home' };
             if (hash.length === 1) return { type: 'user', name: hash[0] };
-            
             const [owner, repo, ...rest] = hash;
             if (rest[0] === 'releases') return { type: 'releases', owner, repo };
             return { type: 'repo', owner, repo, path: rest.join('/') };
@@ -1089,118 +843,48 @@ window.GLOBAL_CONFIG = {
         const handleRoute = async () => {
             const route = parseRoute();
             document.getElementById('main-content').innerHTML = '<div class="text-center text-text-3 py-20">加载中...</div>';
-            
             try {
                 if (route.type === 'home') renderHome();
                 else if (route.type === 'user') {
-                    // 暂不实现用户页面，这里简单提示一下
-                    const user = await request('/users/' + route.name);
-                    const repos = await request('/users/' + route.name + '/repos?sort=updated&per_page=30');
-                    
+                    const user = await request('/users/' + route.name); const repos = await request('/users/' + route.name + '/repos?sort=updated&per_page=30');
                     document.getElementById('file-tree').innerHTML = '<div class="p-3 text-text-3 text-sm">用户主页</div>';
-                    document.getElementById('prop-panel').innerHTML = `
-                        <div class="prop-section">
-                            <div class="prop-section-title">用户信息</div>
-                            <div class="text-center mb-2">
-                                <img src="${user.avatar_url}" class="w-16 h-16 rounded-full mx-auto mb-2" alt="">
-                                <div class="font-bold">${user.name || route.name}</div>
-                                <div class="text-text-3 text-xs">@${route.name}</div>
-                            </div>
-                            <div class="prop-row"><span class="label">仓库</span><span>${user.public_repos}</span></div>
-                            <div class="prop-row"><span class="label">粉丝</span><span>${user.followers}</span></div>
-                        </div>
-                    `;
-
-                    document.getElementById('main-content').innerHTML = `
-                        <h1 class="text-2xl font-bold mb-4">${user.name || route.name}</h1>
-                        ${user.bio ? `<p class="text-text-2 mb-6">${user.bio}</p>` : ''}
-                        <div class="grid gap-3">
-                            ${repos.map(r => `
-                                <a href="#/${r.full_name}" class="block bg-bg-2 border border-border rounded-lg p-4 hover:border-primary transition-colors">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="font-medium text-primary">${r.full_name}</span>
-                                        <span class="text-text-3 text-xs">⭐ ${r.stargazers_count}</span>
-                                    </div>
-                                    ${r.description ? `<p class="text-text-2 text-sm line-clamp-2">${r.description}</p>` : ''}
-                                </a>`).join('')}
-                        </div>`;
+                    document.getElementById('view-prop').innerHTML = `<div class="prop-section"><div class="prop-section-title">用户信息</div><div class="text-center mb-2"><img src="${user.avatar_url}" class="w-16 h-16 rounded-full mx-auto mb-2" alt=""><div class="font-bold">${user.name || route.name}</div><div class="text-text-3 text-xs">@${route.name}</div></div><div class="prop-row"><span class="label">仓库</span><span>${user.public_repos}</span></div><div class="prop-row"><span class="label">粉丝</span><span>${user.followers}</span></div></div>`;
+                    document.getElementById('main-content').innerHTML = `<h1 class="text-2xl font-bold mb-4">${user.name || route.name}</h1>${user.bio ? `<p class="text-text-2 mb-6">${user.bio}</p>` : ''}<div class="grid gap-3">${repos.map(r => `<a href="#/${r.full_name}" class="block bg-bg-2 border border-border rounded-lg p-4 hover:border-primary transition-colors"><div class="flex justify-between items-center mb-2"><span class="font-medium text-primary">${r.full_name}</span><span class="text-text-3 text-xs">⭐ ${r.stargazers_count}</span></div>${r.description ? `<p class="text-text-2 text-sm line-clamp-2">${r.description}</p>` : ''}</a>`).join('')}</div>`;
+                    switchTab('prop');
                 }
                 else if (route.type === 'releases') await renderReleases(route.owner, route.repo);
                 else await renderRepo(route.owner, route.repo, route.path);
             } catch (err) {
-                document.getElementById('main-content').innerHTML = `
-                    <div class="text-center py-20">
-                        <div class="text-red-400 mb-2">出错了</div>
-                        <div class="text-text-3">${err.message}</div>
-                    </div>`;
+                document.getElementById('main-content').innerHTML = `<div class="text-center py-20"><div class="text-red-400 mb-2">出错了</div><div class="text-text-3">${err.message}</div></div>`;
             }
         };
 
-        // ========== 事件初始化 ==========
         const initEvents = () => {
-            // 主题切换
             document.getElementById('theme-select').addEventListener('change', e => {
-                const theme = e.target.value;
-                document.documentElement.setAttribute('data-theme', theme);
-                storage.set('theme', theme);
+                const theme = e.target.value; document.documentElement.setAttribute('data-theme', theme); storage.set('theme', theme);
                 const hljsName = HLJS_THEME_MAP[theme] || 'atom-one-dark';
                 document.getElementById('hljs-style').href = `https://cdn.jsdelivr.net/npm/highlight.js@11/styles/${hljsName}.min.css`;
             });
-
-            // 搜索框回车
-            document.getElementById('search-input').addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    const rawVal = e.target.value.trim();
-                    if (!rawVal) return;
-                    window.location.hash = '/' + parseInputText(rawVal);
-                }
-            });
-
-            // 设置弹窗
+            document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') { const rawVal = e.target.value.trim(); if (!rawVal) return; window.location.hash = '/' + parseInputText(rawVal); } });
             const modal = document.getElementById('settings-modal');
-            document.getElementById('settings-btn').addEventListener('click', () => {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.getElementById('token-input').value = storage.get('github_token') || '';
-                document.getElementById('translate-api-key').value = storage.get('translate_api_key') || '';
-            });
-
-            document.getElementById('close-settings').addEventListener('click', () => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            });
-
+            document.getElementById('settings-btn').addEventListener('click', () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.getElementById('token-input').value = storage.get('github_token') || ''; document.getElementById('translate-api-key').value = storage.get('translate_api_key') || ''; });
+            document.getElementById('close-settings').addEventListener('click', () => { modal.classList.add('hidden'); modal.classList.remove('flex'); });
             document.getElementById('save-settings').addEventListener('click', () => {
                 storage.set('github_token', document.getElementById('token-input').value.trim());
                 storage.set('translate_api_key', document.getElementById('translate-api-key').value.trim());
-                cache.clear();
-                dirCache.clear();
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                handleRoute();
+                cache.clear(); dirCache.clear(); modal.classList.add('hidden'); modal.classList.remove('flex'); handleRoute();
             });
-
-            modal.addEventListener('click', e => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }
-            });
-
+            modal.addEventListener('click', e => { if (e.target === modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } });
             window.addEventListener('hashchange', handleRoute);
         };
 
-        // ========== 初始化执行 ==========
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = storage.get('theme') || 'ayu-dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
             document.getElementById('theme-select').value = savedTheme;
             const hljsName = HLJS_THEME_MAP[savedTheme] || 'atom-one-dark';
             document.getElementById('hljs-style').href = `https://cdn.jsdelivr.net/npm/highlight.js@11/styles/${hljsName}.min.css`;
-
-            initEvents();
-            initSidebar();   // ← 新增：初始化侧边栏拖拽与展开按钮
-            handleRoute();
+            initEvents(); initSidebar(); handleRoute();
         });
     </script>
 </body>
