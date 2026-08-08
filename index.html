@@ -9,10 +9,10 @@
         const CONFIG = {
             // 替换为你的阅读器主域名，末尾不要加斜杠
             READER_DOMAIN: "https://你的站点名.netlify.app",
-            // gh-proxy 统一加速前缀（末尾带斜杠）
-            PROXY_BASE: "shturl.cc/Fww8Jvb6F712vds",
-            // GitHub 官方 API（自动走加速）
-            GITHUB_API_BASE: "shturl.cc/Fww8Jvb6F712vdshttps://api.github.com",
+            // 通用代理前缀（API、头像等所有 GitHub 资源统一走此加速）
+            PROXY_PREFIX: "https://cdn.gh-proxy.org/",
+            // GitHub 官方 API 基础地址
+            GITHUB_API_BASE: "https://api.github.com",
         };
 
         // 主题列表，与阅读器完全一致
@@ -28,6 +28,12 @@
             "catppuccin-latte": "Catppuccin Latte",
             "github-light": "GitHub Light",
         };
+
+        // 通用代理函数：给原始 URL 套上加速前缀
+        function proxyUrl(rawUrl) {
+            if (!rawUrl) return rawUrl;
+            return CONFIG.PROXY_PREFIX + rawUrl;
+        }
     </script>
 
     <style>
@@ -408,12 +414,6 @@
             window.location.href = CONFIG.READER_DOMAIN + '/#' + val;
         });
 
-        // ===================== 通用加速函数 =====================
-        function proxyUrl(rawUrl) {
-            if (!rawUrl || rawUrl.startsWith('data:')) return rawUrl;
-            return CONFIG.PROXY_BASE + rawUrl;
-        }
-
         // ===================== GitHub Search API 趋势榜 =====================
         const repoList = document.getElementById('repoList');
         let currentDays = 7;
@@ -460,7 +460,8 @@
                     per_page: 30
                 });
 
-                const url = `${CONFIG.GITHUB_API_BASE}/search/repositories?${params.toString()}`;
+                // API 请求走代理
+                const url = proxyUrl(`${CONFIG.GITHUB_API_BASE}/search/repositories?${params.toString()}`);
                 const res = await fetch(url);
                 
                 if (!res.ok) {
@@ -490,15 +491,15 @@
                 const langColor = LANG_COLORS[item.language] || 'var(--primary)';
                 const rawAvatar = item.owner.avatar_url;
                 const proxiedAvatar = proxyUrl(rawAvatar);
-                
+
                 return `
                     <div class="repo-card" onclick="window.location.href='${CONFIG.READER_DOMAIN}/#${item.full_name}'">
                         <div class="repo-header">
                             <img class="avatar" 
                                  src="${proxiedAvatar}" 
-                                 onerror="this.src='${rawAvatar}'; this.onerror=null;"
                                  alt="${item.owner.login}" 
-                                 loading="lazy">
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.src='${rawAvatar}'">
                             <span class="repo-name">${item.full_name}</span>
                         </div>
                         <div class="repo-desc">${item.description || '暂无描述'}</div>
