@@ -1,32 +1,529 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="ayu-dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGitHub 短链跳转</title>
+    <title>AGitHub Trending | GitHub 趋势榜单</title>
     <script>
-        // 替换成你的 Netlify 正式阅读器域名，末尾不要加斜杠
-        const TARGET_DOMAIN = "https://agithub.cc.cd";
-        const fullPath = window.location.pathname + window.location.search + window.location.hash;
-        window.location.replace(TARGET_DOMAIN + fullPath);
+        // ===================== 全局配置 =====================
+        const CONFIG = {
+            // 替换为你的阅读器主域名，末尾不要加斜杠
+            READER_DOMAIN: "https://agithub.cc.cd",
+            // GitHub 官方 API 走 gh-proxy 加速
+            GITHUB_API_BASE: "https://cdn.gh-proxy.org/https://api.github.com",
+        };
+
+        // 主题列表，与阅读器完全一致
+        const THEME_MAP = {
+            "ayu-dark": "Ayu Dark",
+            "catppuccin-mocha": "Catppuccin Mocha",
+            "github-dark": "GitHub Dark",
+            "dracula": "Dracula",
+            "monokai": "Monokai",
+            "nord": "Nord",
+            "one-dark": "One Dark",
+            "ayu-light": "Ayu Light",
+            "catppuccin-latte": "Catppuccin Latte",
+            "github-light": "GitHub Light",
+        };
     </script>
+
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-        body{min-height:100vh;display:grid;place-items:center;background:#0d1117;color:#fff;text-align:center}
-        .box{padding:2rem}
-        h1{font-size:28px;margin-bottom:12px}
-        p{opacity:0.7;margin-bottom:20px}
-        .tip{color:#58a6ff}
+        /* ========== 主题变量（与阅读器 1:1 对齐） ========== */
+        [data-theme="ayu-dark"] {
+            --bg: #0b0e14;
+            --bg-secondary: #0f1419;
+            --bg-tertiary: #141920;
+            --text: #e6e1cf;
+            --text-secondary: #b3b1ad;
+            --text-muted: #5c6773;
+            --primary: #ffb454;
+            --accent: #39bae6;
+            --border: #1f2937;
+        }
+        [data-theme="catppuccin-mocha"] {
+            --bg: #1e1e2e;
+            --bg-secondary: #282838;
+            --bg-tertiary: #313244;
+            --text: #cdd6f4;
+            --text-secondary: #bac2de;
+            --text-muted: #6c7086;
+            --primary: #cba6f7;
+            --accent: #89b4fa;
+            --border: #45475a;
+        }
+        [data-theme="github-dark"] {
+            --bg: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text: #f0f6fc;
+            --text-secondary: #c9d1d9;
+            --text-muted: #8b949e;
+            --primary: #58a6ff;
+            --accent: #238636;
+            --border: #30363d;
+        }
+        [data-theme="dracula"] {
+            --bg: #282a36;
+            --bg-secondary: #21222c;
+            --bg-tertiary: #44475a;
+            --text: #f8f8f2;
+            --text-secondary: #bd93f9;
+            --text-muted: #6272a4;
+            --primary: #bd93f9;
+            --accent: #ff79c6;
+            --border: #44475a;
+        }
+        [data-theme="monokai"] {
+            --bg: #272822;
+            --bg-secondary: #1e1f1c;
+            --bg-tertiary: #3e3d32;
+            --text: #f8f8f2;
+            --text-secondary: #a6e22e;
+            --text-muted: #75715e;
+            --primary: #f92672;
+            --accent: #66d9ef;
+            --border: #49483e;
+        }
+        [data-theme="nord"] {
+            --bg: #2e3440;
+            --bg-secondary: #3b4252;
+            --bg-tertiary: #434c5e;
+            --text: #eceff4;
+            --text-secondary: #d8dee9;
+            --text-muted: #4c566a;
+            --primary: #88c0d0;
+            --accent: #5e81ac;
+            --border: #4c566a;
+        }
+        [data-theme="one-dark"] {
+            --bg: #282c34;
+            --bg-secondary: #21252b;
+            --bg-tertiary: #373c44;
+            --text: #abb2bf;
+            --text-secondary: #c678dd;
+            --text-muted: #5c6370;
+            --primary: #61afef;
+            --accent: #98c379;
+            --border: #3e4451;
+        }
+        [data-theme="ayu-light"] {
+            --bg: #fafafa;
+            --bg-secondary: #f3f4f5;
+            --bg-tertiary: #e8e9eb;
+            --text: #5c6773;
+            --text-secondary: #6b7680;
+            --text-muted: #8a9199;
+            --primary: #ff9940;
+            --accent: #41a6d9;
+            --border: #e6e7e9;
+        }
+        [data-theme="catppuccin-latte"] {
+            --bg: #eff1f5;
+            --bg-secondary: #e6e9ef;
+            --bg-tertiary: #dce0e8;
+            --text: #4c4f69;
+            --text-secondary: #5c5f77;
+            --text-muted: #7c7f93;
+            --primary: #8839ef;
+            --accent: #1e66f5;
+            --border: #ccd0da;
+        }
+        [data-theme="github-light"] {
+            --bg: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #e1e4e8;
+            --text: #24292f;
+            --text-secondary: #57606a;
+            --text-muted: #8b949e;
+            --primary: #0969da;
+            --accent: #1a7f37;
+            --border: #d0d7de;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ========== 顶部导航（与阅读器完全对齐） ========== */
+        header {
+            height: 56px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .search-box {
+            flex: 1;
+            max-width: 600px;
+        }
+        .search-box input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color .2s;
+        }
+        .search-box input:focus { border-color: var(--primary); }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        select {
+            height: 36px;
+            padding: 0 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+        select:focus { border-color: var(--primary); }
+
+        /* ========== 主内容区 ========== */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .filter-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: var(--bg);
+            font-weight: 500;
+        }
+        .filter-btn:hover:not(.active) { color: var(--text); }
+
+        /* ========== 仓库卡片 ========== */
+        .repo-list {
+            display: grid;
+            gap: 16px;
+        }
+        .repo-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all .2s;
+            cursor: pointer;
+        }
+        .repo-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .repo-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+        }
+        .repo-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .repo-desc {
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .repo-meta {
+            display: flex;
+            gap: 16px;
+            color: var(--text-muted);
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .lang-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        /* 加载/错误状态 */
+        .state-wrap {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .loading {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            header { padding: 0 16px; gap: 12px; }
+            main { padding: 20px 16px; }
+            .repo-card { padding: 16px; }
+        }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>AGitHub 阅读器短链分发</h1>
-        <p>正在自动跳转至阅读器主页……</p>
-        <p class="tip">若长时间无响应：<a id="manual" style="color:#58a6ff">点击手动前往</a></p>
-    </div>
+    <!-- 顶部导航栏 -->
+    <header>
+        <div class="logo" onclick="window.location.href='/'">AGitHub</div>
+        <div class="search-box">
+            <input id="searchInput" type="text" placeholder="粘贴 GitHub 链接 / 输入 owner/repo 回车跳转">
+        </div>
+        <div class="header-right">
+            <select id="themeSelect"></select>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main>
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <div class="filter-group" id="sinceGroup">
+                <button class="filter-btn active" data-days="7">近 7 天</button>
+                <button class="filter-btn" data-days="30">近 30 天</button>
+                <button class="filter-btn" data-days="90">近 90 天</button>
+            </div>
+            <div class="filter-group" id="langGroup">
+                <button class="filter-btn active" data-lang="">全部语言</button>
+                <button class="filter-btn" data-lang="javascript">JavaScript</button>
+                <button class="filter-btn" data-lang="python">Python</button>
+                <button class="filter-btn" data-lang="go">Go</button>
+                <button class="filter-btn" data-lang="rust">Rust</button>
+                <button class="filter-btn" data-lang="java">Java</button>
+                <button class="filter-btn" data-lang="typescript">TypeScript</button>
+            </div>
+        </div>
+
+        <!-- 仓库列表 -->
+        <div id="repoList" class="repo-list">
+            <div class="state-wrap">
+                <div class="loading"></div>
+                <div>加载中...</div>
+            </div>
+        </div>
+    </main>
+
     <script>
-        document.getElementById('manual').href = TARGET_DOMAIN;
+        // ===================== 主题系统（与阅读器共享存储） =====================
+        const themeSelect = document.getElementById('themeSelect');
+        Object.entries(THEME_MAP).forEach(([key, name]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = name;
+            themeSelect.appendChild(opt);
+        });
+
+        function initTheme() {
+            const saved = localStorage.getItem('ghr_theme') || 'ayu-dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            themeSelect.value = saved;
+        }
+
+        themeSelect.addEventListener('change', (e) => {
+            const theme = e.target.value;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('ghr_theme', theme);
+        });
+
+        // ===================== 搜索跳转 =====================
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            let val = e.target.value.trim();
+            if (!val) return;
+            val = val.replace(/^https?:\/\//, '').replace(/^github\.com\//, '');
+            window.location.href = CONFIG.READER_DOMAIN + '/#' + val;
+        });
+
+        // ===================== GitHub Search API 趋势榜 =====================
+        const repoList = document.getElementById('repoList');
+        let currentDays = 7;
+        let currentLang = '';
+
+        // 语言颜色映射
+        const LANG_COLORS = {
+            JavaScript: '#f1e05a',
+            Python: '#3572A5',
+            Go: '#00ADD8',
+            Rust: '#dea584',
+            Java: '#b07219',
+            TypeScript: '#3178c6',
+            'C++': '#f34b7d',
+            C: '#555555',
+            Ruby: '#701516',
+            PHP: '#4F5D95',
+        };
+
+        // 计算 N 天前的日期
+        function getDateBefore(days) {
+            const d = new Date();
+            d.setDate(d.getDate() - days);
+            return d.toISOString().split('T')[0];
+        }
+
+        async function loadRepos() {
+            repoList.innerHTML = `
+                <div class="state-wrap">
+                    <div class="loading"></div>
+                    <div>加载中...</div>
+                </div>
+            `;
+
+            try {
+                const sinceDate = getDateBefore(currentDays);
+                let query = `created:>${sinceDate} stars:>=100`;
+                if (currentLang) query += ` language:${currentLang}`;
+
+                const params = new URLSearchParams({
+                    q: query,
+                    sort: 'stars',
+                    order: 'desc',
+                    per_page: 30
+                });
+
+                const url = `${CONFIG.GITHUB_API_BASE}/search/repositories?${params.toString()}`;
+                const res = await fetch(url);
+                
+                if (!res.ok) {
+                    if (res.status === 403) throw new Error('API 速率限制，请稍后再试或配置 PAT');
+                    throw new Error('请求失败 (' + res.status + ')');
+                }
+
+                const data = await res.json();
+                if (!data.items || data.items.length === 0) {
+                    repoList.innerHTML = `<div class="state-wrap">暂无符合条件的仓库</div>`;
+                    return;
+                }
+
+                renderList(data.items);
+            } catch (err) {
+                repoList.innerHTML = `
+                    <div class="state-wrap">
+                        <div>加载失败，请稍后重试</div>
+                        <div style="font-size:12px; margin-top:8px; opacity:0.6">${err.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderList(items) {
+            repoList.innerHTML = items.map(item => {
+                const langColor = LANG_COLORS[item.language] || 'var(--primary)';
+                return `
+                    <div class="repo-card" onclick="window.location.href='${CONFIG.READER_DOMAIN}/#${item.full_name}'">
+                        <div class="repo-header">
+                            <img class="avatar" src="${item.owner.avatar_url}" alt="${item.owner.login}" loading="lazy">
+                            <span class="repo-name">${item.full_name}</span>
+                        </div>
+                        <div class="repo-desc">${item.description || '暂无描述'}</div>
+                        <div class="repo-meta">
+                            ${item.language ? `
+                            <div class="meta-item">
+                                <span class="lang-dot" style="background:${langColor}"></span>
+                                <span>${item.language}</span>
+                            </div>
+                            ` : ''}
+                            <div class="meta-item">⭐ ${Number(item.stargazers_count).toLocaleString()}</div>
+                            <div class="meta-item">🍴 ${Number(item.forks_count).toLocaleString()}</div>
+                            <div class="meta-item">📅 ${item.created_at.split('T')[0]}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 筛选事件绑定
+        document.getElementById('sinceGroup').addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            document.querySelectorAll('#sinceGroup .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentDays = parseInt(btn.dataset.days);
+            loadRepos();
+        });
+
+        document.getElementById('langGroup').addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            document.querySelectorAll('#langGroup .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLang = btn.dataset.lang;
+            loadRepos();
+        });
+
+        // 页面初始化
+        initTheme();
+        loadRepos();
     </script>
 </body>
 </html>
