@@ -8,9 +8,11 @@
         // ===================== 全局配置 =====================
         const CONFIG = {
             // 替换为你的阅读器主域名，末尾不要加斜杠
-            READER_DOMAIN: "https://agithub.cc.cd",
-            // GitHub 官方 API 走 gh-proxy 加速
-            GITHUB_API_BASE: "https://cdn.gh-proxy.org/https://api.github.com",
+            READER_DOMAIN: "https://你的站点名.netlify.app",
+            // gh-proxy 统一加速前缀（末尾带斜杠）
+            PROXY_BASE: "shturl.cc/Fww8Jvb6F712vds",
+            // GitHub 官方 API（自动走加速）
+            GITHUB_API_BASE: "shturl.cc/Fww8Jvb6F712vdshttps://api.github.com",
         };
 
         // 主题列表，与阅读器完全一致
@@ -272,6 +274,7 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
+            flex-shrink: 0;
         }
         .repo-name {
             font-size: 16px;
@@ -405,6 +408,12 @@
             window.location.href = CONFIG.READER_DOMAIN + '/#' + val;
         });
 
+        // ===================== 通用加速函数 =====================
+        function proxyUrl(rawUrl) {
+            if (!rawUrl || rawUrl.startsWith('data:')) return rawUrl;
+            return CONFIG.PROXY_BASE + rawUrl;
+        }
+
         // ===================== GitHub Search API 趋势榜 =====================
         const repoList = document.getElementById('repoList');
         let currentDays = 7;
@@ -479,10 +488,17 @@
         function renderList(items) {
             repoList.innerHTML = items.map(item => {
                 const langColor = LANG_COLORS[item.language] || 'var(--primary)';
+                const rawAvatar = item.owner.avatar_url;
+                const proxiedAvatar = proxyUrl(rawAvatar);
+                
                 return `
                     <div class="repo-card" onclick="window.location.href='${CONFIG.READER_DOMAIN}/#${item.full_name}'">
                         <div class="repo-header">
-                            <img class="avatar" src="${item.owner.avatar_url}" alt="${item.owner.login}" loading="lazy">
+                            <img class="avatar" 
+                                 src="${proxiedAvatar}" 
+                                 onerror="this.src='${rawAvatar}'; this.onerror=null;"
+                                 alt="${item.owner.login}" 
+                                 loading="lazy">
                             <span class="repo-name">${item.full_name}</span>
                         </div>
                         <div class="repo-desc">${item.description || '暂无描述'}</div>
