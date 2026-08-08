@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGitHub 短链跳转</title>
+    <script>
+        // 替换成你的 Netlify 正式阅读器域名，末尾不要加斜杠
+        const TARGET_DOMAIN = "https://agithub.cc.cd";
+        const fullPath = window.location.pathname + window.location.search + window.location.hash;
+        window.location.replace(TARGET_DOMAIN + fullPath);
+    </script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+        body{min-height:100vh;display:grid;place-items:center;background:#0d1117;color:#fff;text-align:center}
+        .box{padding:2rem}
+        h1{font-size:28px;margin-bottom:12px}
+        p{opacity:0.7;margin-bottom:20px}
+        .tip{color:#58a6ff}
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>AGitHub 阅读器短链分发</h1>
+        <p>正在自动跳转至阅读器主页……</p>
+        <p class="tip">若长时间无响应：<a id="manual" style="color:#58a6ff">点击手动前往</a></p>
+    </div>
+    <script>
+        document.getElementById('manual').href = TARGET_DOMAIN;
+    </script>
+</body>
+</html>
